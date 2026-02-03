@@ -115,9 +115,24 @@ router.delete("/:id", authenticate, async (req, res) => {
       return res.status(400).json({ error: "Cannot delete your own account" });
     }
     
+    // Check if user has orders
+    const [orders] = await pool.execute(
+      "SELECT COUNT(*) as count FROM pos_order WHERE user_id = ?",
+      [id]
+    );
+    
+    if (orders[0].count > 0) {
+      return res.status(400).json({ 
+        error: "Cannot delete user. They have order history. Consider deactivating instead." 
+      });
+    }
+    
     await pool.execute("DELETE FROM pos_user WHERE id = ?", [id]);
     
-    res.json({ message: "User deleted successfully" });
+    res.json({ 
+      message: "User deleted successfully",
+      deletedId: id
+    });
     
   } catch (error) {
     console.error("Delete user error:", error);

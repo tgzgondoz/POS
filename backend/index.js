@@ -12,6 +12,8 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+let isSeeded = false; // Flag to track if database has been seeded
+
 // Initialize database and seed
 async function initializeApp() {
   try {
@@ -31,13 +33,23 @@ async function initializeApp() {
     // Create tables if they don't exist
     await createTables(pool);
     
-    // Seed database with car spare parts data
-    await seedDatabase(pool);
+    // Check if database is already seeded
+    const [userCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_user");
+    const [productCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_product");
+    
+    // Only seed if database is empty
+    if (userCount[0].count === 0 && productCount[0].count === 0) {
+      console.log("📦 Database is empty, seeding initial data...");
+      await seedDatabase(pool);
+      isSeeded = true;
+    } else {
+      console.log("📊 Database already has data, skipping seed...");
+      console.log(`   Users: ${userCount[0].count}, Products: ${productCount[0].count}`);
+      isSeeded = false;
+    }
     
     // Set pool as global for db.js
     global.dbPool = pool;
-    
-    console.log("✅ Database initialized and seeded with car spare parts");
     
   } catch (error) {
     console.error("❌ Database initialization failed:", error.message);
@@ -97,114 +109,142 @@ async function createTables(pool) {
   for (const sql of tables) {
     await pool.execute(sql);
   }
+  console.log("✅ Database tables created/verified");
 }
 
 async function seedDatabase(pool) {
   try {
+    console.log("🌱 Seeding database with car spare parts data...");
+    
     // Hash passwords
     const adminPassword = await bcrypt.hash("admin123", 10);
     const cashierPassword = await bcrypt.hash("cashier123", 10);
 
-    // Insert users
-    await pool.execute(
-      `INSERT IGNORE INTO pos_user (username, password, name, role) VALUES 
-       (?, ?, ?, 'admin'),
-       (?, ?, ?, 'cashier')`,
-      ["admin", adminPassword, "Admin User", "cashier", cashierPassword, "John Cashier"]
+    // Check if users already exist before inserting
+    const [existingAdmin] = await pool.execute(
+      "SELECT id FROM pos_user WHERE username = 'admin'"
     );
-
-    // Insert car spare parts categories
-    await pool.execute(
-      `INSERT IGNORE INTO pos_category (name, description) VALUES 
-       ('Engine Parts', 'Engine components and accessories'),
-       ('Brake System', 'Brake pads, discs, and hydraulic parts'),
-       ('Suspension', 'Shocks, struts, and suspension components'),
-       ('Electrical', 'Batteries, alternators, and wiring'),
-       ('Filters & Fluids', 'Oil filters, air filters, and fluids'),
-       ('Body Parts', 'Bumpers, lights, and exterior components')`
-    );
-
-    // Get categories and insert car spare parts products
-    const [categories] = await pool.execute("SELECT id, name FROM pos_category");
     
-    for (const category of categories) {
-      if (category.name === 'Engine Parts') {
+    if (existingAdmin.length === 0) {
+      await pool.execute(
+        `INSERT INTO pos_user (username, password, name, role) VALUES (?, ?, ?, 'admin')`,
+        ["admin", adminPassword, "Admin User"]
+      );
+      console.log("👤 Admin user created");
+    }
+    
+    const [existingCashier] = await pool.execute(
+      "SELECT id FROM pos_user WHERE username = 'cashier'"
+    );
+    
+    if (existingCashier.length === 0) {
+      await pool.execute(
+        `INSERT INTO pos_user (username, password, name, role) VALUES (?, ?, ?, 'cashier')`,
+        ["cashier", cashierPassword, "John Cashier"]
+      );
+      console.log("👤 Cashier user created");
+    }
+
+    // Insert car spare parts categories if they don't exist
+    const categoriesData = [
+      ['Engine Parts', 'Engine components and accessories'],
+      ['Brake System', 'Brake pads, discs, and hydraulic parts'],
+      ['Suspension', 'Shocks, struts, and suspension components'],
+      ['Electrical', 'Batteries, alternators, and wiring'],
+      ['Filters & Fluids', 'Oil filters, air filters, and fluids'],
+      ['Body Parts', 'Bumpers, lights, and exterior components']
+    ];
+
+    for (const [name, description] of categoriesData) {
+      const [existingCategory] = await pool.execute(
+        "SELECT id FROM pos_category WHERE name = ?",
+        [name]
+      );
+      
+      if (existingCategory.length === 0) {
         await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Spark Plugs (Set of 4)', 'NGK Iridium spark plugs', 49.99, 100, ?),
-           ('Engine Oil 5W-30', 'Synthetic engine oil 5L', 39.99, 50, ?),
-           ('Timing Belt Kit', 'Complete timing belt replacement kit', 129.99, 25, ?),
-           ('Water Pump', 'OEM replacement water pump', 89.99, 30, ?)`,
-          [category.id, category.id, category.id, category.id]
+          "INSERT INTO pos_category (name, description) VALUES (?, ?)",
+          [name, description]
         );
-      } else if (category.name === 'Brake System') {
-        await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Brake Pads (Front)', 'Ceramic brake pads - front', 59.99, 75, ?),
-           ('Brake Discs (Pair)', 'Vented brake discs - front', 119.99, 40, ?),
-           ('Brake Fluid', 'DOT 4 brake fluid 500ml', 12.99, 100, ?),
-           ('Brake Caliper', 'Remanufactured brake caliper', 149.99, 20, ?)`,
-          [category.id, category.id, category.id, category.id]
-        );
-      } else if (category.name === 'Suspension') {
-        await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Shock Absorbers (Pair)', 'Gas-filled shock absorbers', 199.99, 30, ?),
-           ('Strut Assembly', 'Complete strut assembly', 249.99, 25, ?),
-           ('Stabilizer Link', 'Stabilizer bar link kit', 29.99, 60, ?),
-           ('Control Arm', 'Front lower control arm', 89.99, 35, ?)`,
-          [category.id, category.id, category.id, category.id]
-        );
-      } else if (category.name === 'Electrical') {
-        await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Car Battery', '12V 60Ah maintenance-free battery', 129.99, 40, ?),
-           ('Alternator', '120A alternator replacement', 299.99, 20, ?),
-           ('Starter Motor', 'High-torque starter motor', 189.99, 25, ?),
-           ('Headlight Bulbs (Pair)', 'H7 LED headlight bulbs', 39.99, 80, ?)`,
-          [category.id, category.id, category.id, category.id]
-        );
-      } else if (category.name === 'Filters & Fluids') {
-        await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Oil Filter', 'Premium synthetic oil filter', 14.99, 120, ?),
-           ('Air Filter', 'High-flow air filter', 24.99, 90, ?),
-           ('Cabin Air Filter', 'Activated carbon cabin filter', 29.99, 70, ?),
-           ('Transmission Fluid', 'ATF fluid 1L', 19.99, 60, ?)`,
-          [category.id, category.id, category.id, category.id]
-        );
-      } else if (category.name === 'Body Parts') {
-        await pool.execute(
-          `INSERT IGNORE INTO pos_product (name, description, price, stock_quantity, category_id) VALUES 
-           ('Headlight Assembly', 'LED headlight assembly', 349.99, 15, ?),
-           ('Front Bumper', 'Primed front bumper', 199.99, 10, ?),
-           ('Side Mirror', 'Heated electric side mirror', 89.99, 25, ?),
-           ('Windshield Wiper Blades', 'All-season wiper blades (pair)', 29.99, 100, ?)`,
-          [category.id, category.id, category.id, category.id]
-        );
+        console.log(`📁 Category created: ${name}`);
       }
     }
 
-    console.log("\n=== Car Spare Parts POS System ===");
-    console.log("✅ Database seeded with car spare parts inventory");
+    // Get all categories
+    const [categories] = await pool.execute("SELECT id, name FROM pos_category");
+    
+    // Define products for each category
+    const productsByCategory = {
+      'Engine Parts': [
+        ['Spark Plugs (Set of 4)', 'NGK Iridium spark plugs', 49.99, 100],
+        ['Engine Oil 5W-30', 'Synthetic engine oil 5L', 39.99, 50],
+        ['Timing Belt Kit', 'Complete timing belt replacement kit', 129.99, 25],
+        ['Water Pump', 'OEM replacement water pump', 89.99, 30]
+      ],
+      'Brake System': [
+        ['Brake Pads (Front)', 'Ceramic brake pads - front', 59.99, 75],
+        ['Brake Discs (Pair)', 'Vented brake discs - front', 119.99, 40],
+        ['Brake Fluid', 'DOT 4 brake fluid 500ml', 12.99, 100],
+        ['Brake Caliper', 'Remanufactured brake caliper', 149.99, 20]
+      ],
+      'Suspension': [
+        ['Shock Absorbers (Pair)', 'Gas-filled shock absorbers', 199.99, 30],
+        ['Strut Assembly', 'Complete strut assembly', 249.99, 25],
+        ['Stabilizer Link', 'Stabilizer bar link kit', 29.99, 60],
+        ['Control Arm', 'Front lower control arm', 89.99, 35]
+      ],
+      'Electrical': [
+        ['Car Battery', '12V 60Ah maintenance-free battery', 129.99, 40],
+        ['Alternator', '120A alternator replacement', 299.99, 20],
+        ['Starter Motor', 'High-torque starter motor', 189.99, 25],
+        ['Headlight Bulbs (Pair)', 'H7 LED headlight bulbs', 39.99, 80]
+      ],
+      'Filters & Fluids': [
+        ['Oil Filter', 'Premium synthetic oil filter', 14.99, 120],
+        ['Air Filter', 'High-flow air filter', 24.99, 90],
+        ['Cabin Air Filter', 'Activated carbon cabin filter', 29.99, 70],
+        ['Transmission Fluid', 'ATF fluid 1L', 19.99, 60]
+      ],
+      'Body Parts': [
+        ['Headlight Assembly', 'LED headlight assembly', 349.99, 15],
+        ['Front Bumper', 'Primed front bumper', 199.99, 10],
+        ['Side Mirror', 'Heated electric side mirror', 89.99, 25],
+        ['Windshield Wiper Blades', 'All-season wiper blades (pair)', 29.99, 100]
+      ]
+    };
+
+    let totalProductsCreated = 0;
+    
+    for (const category of categories) {
+      const products = productsByCategory[category.name];
+      if (products) {
+        for (const [name, description, price, stock] of products) {
+          // Check if product already exists
+          const [existingProduct] = await pool.execute(
+            "SELECT id FROM pos_product WHERE name = ? AND category_id = ?",
+            [name, category.id]
+          );
+          
+          if (existingProduct.length === 0) {
+            await pool.execute(
+              "INSERT INTO pos_product (name, description, price, stock_quantity, category_id) VALUES (?, ?, ?, ?, ?)",
+              [name, description, price, stock, category.id]
+            );
+            totalProductsCreated++;
+          }
+        }
+      }
+    }
+
+    console.log(`\n✅ Database seeding completed!`);
+    console.log(`📦 Created ${totalProductsCreated} products`);
     console.log("\n=== Default Login Credentials ===");
-    console.log("Admin:");
-    console.log("  Username: admin");
-    console.log("  Password: admin123");
-    console.log("\nCashier:");
-    console.log("  Username: cashier");
-    console.log("  Password: cashier123");
-    console.log("\n=== Categories Added ===");
-    console.log("1. Engine Parts");
-    console.log("2. Brake System");
-    console.log("3. Suspension");
-    console.log("4. Electrical");
-    console.log("5. Filters & Fluids");
-    console.log("6. Body Parts");
-    console.log("===========================\n");
+    console.log("Admin: admin / admin123");
+    console.log("Cashier: cashier / cashier123");
+    console.log("\n===========================\n");
     
   } catch (error) {
-    console.error("Seed error:", error.message);
+    console.error("❌ Seed error:", error.message);
   }
 }
 
@@ -221,18 +261,37 @@ initializeApp().then(() => {
   app.get("/", (req, res) => {
     res.json({ 
       message: "Car Spare Parts POS Backend API",
+      seeded: isSeeded,
       endpoints: {
         auth: "/api/auth",
         users: "/api/users",
         products: "/api/products",
         categories: "/api/categories",
-        orders: "/api/orders"
+        orders: "/api/orders",
+        inventory_summary: "/api/inventory-summary",
+        low_stock_alerts: "/api/low-stock-alerts",
+        reseed: "POST /api/reseed"
       }
     });
   });
 
-  app.get("/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date() });
+  app.get("/health", async (req, res) => {
+    try {
+      const pool = global.dbPool;
+      const [result] = await pool.execute("SELECT 1 as db_status");
+      res.json({ 
+        status: "ok", 
+        database: "connected",
+        seeded: isSeeded,
+        timestamp: new Date() 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        status: "error", 
+        database: "disconnected",
+        error: error.message 
+      });
+    }
   });
 
   // Get inventory summary
@@ -279,11 +338,68 @@ initializeApp().then(() => {
     }
   });
 
+  // Manual reseed endpoint (for testing)
+  app.post("/api/reseed", async (req, res) => {
+    try {
+      const { force } = req.body;
+      const pool = global.dbPool;
+      
+      if (force === true) {
+        // Truncate tables first
+        await pool.execute("SET FOREIGN_KEY_CHECKS = 0");
+        await pool.execute("TRUNCATE TABLE pos_order_item");
+        await pool.execute("TRUNCATE TABLE pos_order");
+        await pool.execute("TRUNCATE TABLE pos_product");
+        await pool.execute("TRUNCATE TABLE pos_category");
+        await pool.execute("TRUNCATE TABLE pos_user");
+        await pool.execute("SET FOREIGN_KEY_CHECKS = 1");
+        console.log("🗑️  All tables truncated");
+      }
+      
+      await seedDatabase(pool);
+      isSeeded = true;
+      
+      res.json({ 
+        message: "Database reseeded successfully",
+        force: force || false,
+        timestamp: new Date() 
+      });
+      
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get database status
+  app.get("/api/database-status", async (req, res) => {
+    try {
+      const pool = global.dbPool;
+      const [userCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_user");
+      const [productCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_product");
+      const [categoryCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_category");
+      const [orderCount] = await pool.execute("SELECT COUNT(*) as count FROM pos_order");
+      
+      res.json({
+        users: userCount[0].count,
+        products: productCount[0].count,
+        categories: categoryCount[0].count,
+        orders: orderCount[0].count,
+        seeded: isSeeded,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Car Spare Parts POS Server running on port ${PORT}`);
     console.log(`🔗 http://localhost:${PORT}`);
-    console.log(`📊 Inventory Summary: http://localhost:${PORT}/api/inventory-summary`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`📈 Database status: http://localhost:${PORT}/api/database-status`);
+    console.log(`📦 Inventory Summary: http://localhost:${PORT}/api/inventory-summary`);
     console.log(`⚠️  Low Stock Alerts: http://localhost:${PORT}/api/low-stock-alerts`);
+    console.log(`🌱 Reseed database: POST http://localhost:${PORT}/api/reseed with {"force": true}`);
   });
 });

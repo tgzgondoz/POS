@@ -85,4 +85,57 @@ router.get("/:id", authenticate, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// Delete order (with stock restoration)
+router.delete("/:id", authenticate, async (req, res) => {
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    const { id } = req.params;
+    
+    // Get order items to restore stock
+    const [items] = await connection.execute(
+      "SELECT product_id, quantity FROM pos_order_item WHERE order_id = ?",
+      [id]
+    );
+    
+    // Restore stock for each item
+    for (const item of items) {
+      await connection.execute(
+        "UPDATE pos_product SET stock_quantity = stock_quantity + ? WHERE id = ?",
+        [item.quantity, item.product_id]
+      );
+    }
+    
+    // Delete order items first (due to foreign key)
+    await connection.execute(
+      "DELETE FROM pos_order_item WHERE order_id = ?",
+      [id]
+    );
+    
+    // Delete order
+    await connection.execute(
+      "DELETE FROM pos_order WHERE id = ?",
+      [id]
+    );
+    
+    await connection.commit();
+    
+    res.json({ 
+      message: "Order deleted successfully. Stock has been restored.",
+      deletedId: id,
+      restoredItems: items.length
+    });
+    
+  } catch (error) {
+    await connection.rollback();
+    console.error("Delete order error:", error);
+    res.status(500).json({ error: "Server error" });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;
