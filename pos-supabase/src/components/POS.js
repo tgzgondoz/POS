@@ -34,67 +34,177 @@ const POS = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [userVerified, setUserVerified] = useState(false);
 
+  // Check and verify user at component mount
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    checkCurrentUser();
+    checkAndVerifyUser();
   }, []);
 
-  const checkCurrentUser = async () => {
+  // Fetch products and categories after user is verified
+  useEffect(() => {
+    if (userVerified) {
+      fetchProducts();
+      fetchCategories();
+    }
+  }, [userVerified]);
+
+  const checkAndVerifyUser = async () => {
     try {
-      // Get current session
+      setError("");
+      console.log("Starting user verification...");
+      
+      // Method 1: Get from auth prop
+      if (auth?.user) {
+        console.log("User from auth prop:", auth.user);
+        const verified = await verifyAndCreateUser(auth.user);
+        if (verified) {
+          setCurrentUser(auth.user);
+          setUserVerified(true);
+          return;
+        }
+      }
+
+      // Method 2: Get from localStorage
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const localUser = JSON.parse(userStr);
+        console.log("User from localStorage:", localUser);
+        const verified = await verifyAndCreateUser(localUser);
+        if (verified) {
+          setCurrentUser(localUser);
+          setUserVerified(true);
+          return;
+        }
+      }
+
+      // Method 3: Get from Supabase session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
         console.error("Session error:", sessionError);
-        return;
+        throw new Error("Failed to get session");
       }
-
+      
+      console.log("Current session:", session);
+      
       if (session?.user) {
-        console.log("Current user from session:", session.user);
+        console.log("Auth user ID:", session.user.id);
+        const sessionUser = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+          role: session.user.email?.includes('admin') ? 'admin' : 'user'
+        };
         
-        // Check if user exists in users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (userError) {
-          console.log("User not found in users table, creating...");
-          // Create user if not exists
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert([{
-              id: session.user.id,
-              username: session.user.email,
-              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-              role: session.user.email?.includes('admin') ? 'admin' : 'user',
-              created_at: new Date().toISOString()
-            }]);
-
-          if (insertError) {
-            console.error("Error creating user:", insertError);
-          } else {
-            console.log("User created successfully");
-            setCurrentUser({
-              id: session.user.id,
-              email: session.user.email,
-              name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-              role: session.user.email?.includes('admin') ? 'admin' : 'user'
-            });
-          }
-        } else {
-          console.log("User found:", userData);
-          setCurrentUser(userData);
+        const verified = await verifyAndCreateUser(sessionUser);
+        if (verified) {
+          setCurrentUser(sessionUser);
+          setUserVerified(true);
+          
+          // Update localStorage
+          localStorage.setItem("user", JSON.stringify(sessionUser));
+          return;
         }
       } else {
-        console.log("No active session, using auth prop:", auth);
-        setCurrentUser(auth.user);
+        console.log("No active session");
+        setError("Please log in to use POS");
       }
     } catch (error) {
-      console.error("Error checking user:", error);
+      console.error("Error in user verification:", error);
+      setError("User verification failed. Please log in again.");
+    }
+  };
+
+  const verifyAndCreateUser = async (user) => {
+    try {
+      if (!user || !user.id) {
+        console.error("Invalid user object:", user);
+        return false;
+      }
+
+      console.log("Verifying user in database:", user.id);
+
+      // Check if user exists in users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userError) {
+        console.error("Error checking user:", userError);
+        return false;
+      }
+
+      // If user doesn't exist, create them
+      if (!userData) {
+        console.log("User not found in database, creating...");
+        const created = await createUserInDatabase(user);
+        return created;
+      }
+
+      console.log("User found in database:", userData);
+      
+      // Update current user with database info
+      setCurrentUser(userData);
+      return true;
+      
+    } catch (error) {
+      console.error("Error in verifyAndCreateUser:", error);
+      return false;
+    }
+  };
+
+  const createUserInDatabase = async (user) => {
+    try {
+      const newUser = {
+        id: user.id,
+        username: user.email || user.username || `user_${Date.now()}`,
+        name: user.name || user.email?.split('@')[0] || 'User',
+        role: user.role || (user.email?.includes('admin') ? 'admin' : 'user'),
+        created_at: new Date().toISOString()
+      };
+
+      console.log("Creating user with data:", newUser);
+
+      const { data, error } = await supabase
+        .from('users')
+        .insert([newUser])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating user:", error);
+        
+        // Check if it's a duplicate key error (user was created by another process)
+        if (error.code === '23505') {
+          console.log("User might have been created by another process, trying to fetch...");
+          
+          // Try to fetch the user again
+          const { data: existingUser, error: fetchError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (!fetchError && existingUser) {
+            console.log("Found existing user:", existingUser);
+            setCurrentUser(existingUser);
+            return true;
+          }
+        }
+        
+        return false;
+      }
+
+      console.log("User created successfully:", data);
+      setCurrentUser(data);
+      return true;
+      
+    } catch (error) {
+      console.error("Error in createUserInDatabase:", error);
+      return false;
     }
   };
 
@@ -211,30 +321,14 @@ const POS = ({ auth }) => {
     : Math.min(discountAmount, subtotal);
   const total = Math.max(0, subtotal + tax - discount);
 
-  const validateUser = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, role')
-        .eq('id', userId)
-        .single();
-      
-      if (error || !data) {
-        console.error("User validation failed:", error);
-        return false;
-      }
-      
-      console.log("User validated:", data);
-      return true;
-    } catch (error) {
-      console.error("Error validating user:", error);
-      return false;
-    }
-  };
-
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setError("Cart is empty");
+      return;
+    }
+
+    if (!currentUser) {
+      setError("User not authenticated. Please log in again.");
       return;
     }
     
@@ -242,32 +336,31 @@ const POS = ({ auth }) => {
     setError("");
     
     try {
-      // Get current user
-      let user = currentUser;
-      
-      if (!user) {
-        // Try from localStorage
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          user = JSON.parse(userStr);
+      console.log("Processing order for user:", currentUser);
+
+      // Double-check user exists in database before creating order
+      const { data: userExists, error: userCheckError } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+
+      if (userCheckError) {
+        console.error("User check error:", userCheckError);
+        throw new Error("Error verifying user account");
+      }
+
+      if (!userExists) {
+        console.log("User not found, attempting to create...");
+        const created = await createUserInDatabase(currentUser);
+        if (!created) {
+          throw new Error("Failed to verify/create user account");
         }
-      }
-
-      if (!user || !user.id) {
-        throw new Error("Please log in to complete order");
-      }
-
-      console.log("Processing order for user:", user);
-
-      // Validate user exists in database
-      const isValidUser = await validateUser(user.id);
-      if (!isValidUser) {
-        throw new Error("User account not found. Please log in again.");
       }
 
       // Prepare order data
       const orderData = {
-        user_id: user.id,
+        user_id: currentUser.id,
         total_amount: total,
         discount: discount,
         discount_type: discountType,
@@ -289,9 +382,8 @@ const POS = ({ auth }) => {
       if (orderError) {
         console.error("Order creation error details:", orderError);
         
-        // Check for foreign key violation
         if (orderError.code === '23503') {
-          throw new Error(`User ID ${user.id} not found in database. Please contact support.`);
+          throw new Error(`User account issue. Please log out and log in again.`);
         }
         
         throw orderError;
@@ -299,14 +391,16 @@ const POS = ({ auth }) => {
 
       console.log("Order created:", order);
 
-      // Create order items
+      // Create order items - WITHOUT subtotal column
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
         quantity: item.quantity,
-        price: item.price,
-        subtotal: item.price * item.quantity
+        price: item.price
+        // subtotal is removed - calculate it when needed or add column to database
       }));
+
+      console.log("Creating order items:", orderItems);
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -359,12 +453,50 @@ const POS = ({ auth }) => {
     return matchesSearch && matchesCategory;
   });
 
+  // Show login required message if user not verified
+  if (!userVerified) {
+    return (
+      <div className="pos-container">
+        <div className="login-required" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '400px',
+          textAlign: 'center',
+          padding: '2rem'
+        }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔐</div>
+          <h2>Login Required</h2>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>{error || "Please log in to access the POS system"}</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            style={{
+              padding: '0.75rem 2rem',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pos-container">
       <header className="pos-header">
         <div className="header-brand">
           <h1>Point of Sale</h1>
-          <p className="subtitle">Welcome, {currentUser?.name || auth.user?.name || 'Guest'}</p>
+          <p className="subtitle">Welcome, {currentUser?.name || auth.user?.name || 'User'}</p>
+          <p className="user-role" style={{ fontSize: '0.85rem', color: '#666' }}>
+            Role: {currentUser?.role || 'staff'}
+          </p>
         </div>
         
         <div className="header-actions">

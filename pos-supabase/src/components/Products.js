@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { productsApi, categoriesApi } from "../lib/api";
+import { supabase } from "../lib/supabase";
 import "./Products.css";
 
 const Products = ({ auth }) => {
@@ -27,22 +27,49 @@ const Products = ({ auth }) => {
 
   const fetchProducts = async () => {
     try {
-      const data = await productsApi.getAll();
-      setProducts(data);
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            name
+          )
+        `)
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedProducts = data.map(product => ({
+        ...product,
+        category_name: product.categories?.name || 'Uncategorized',
+        price: parseFloat(product.price) || 0,
+        stock_quantity: parseInt(product.stock_quantity) || 0
+      }));
+
+      setProducts(formattedProducts);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching products:", error);
-      setError("Failed to load products");
+      setError("Failed to load products: " + error.message);
       setLoading(false);
     }
   };
 
   const fetchCategories = async () => {
     try {
-      const data = await categoriesApi.getAll();
-      setCategories(data);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
+      setError("Failed to load categories: " + error.message);
     }
   };
 
@@ -59,6 +86,7 @@ const Products = ({ auth }) => {
     setError("");
     setSuccess("");
     
+    // Validation
     if (!formData.name.trim()) {
       setError("Product name is required");
       return;
@@ -76,20 +104,61 @@ const Products = ({ auth }) => {
     
     try {
       const productData = {
-        ...formData,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity),
-        category_id: formData.category_id || null
+        category_id: formData.category_id || null,
+        updated_at: new Date().toISOString()
       };
+
+      console.log("Saving product data:", productData);
       
       if (editingProduct) {
-        await productsApi.update(editingProduct.id, productData);
-        setSuccess("Product updated successfully");
+        // Update existing product
+        const { data, error } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', editingProduct.id)
+          .select(`
+            *,
+            categories:category_id (
+              name
+            )
+          `)
+          .single();
+
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        
+        setSuccess(`Product "${data.name}" updated successfully`);
       } else {
-        await productsApi.create(productData);
-        setSuccess("Product added successfully");
+        // Create new product
+        const { data, error } = await supabase
+          .from('products')
+          .insert([{
+            ...productData,
+            created_at: new Date().toISOString()
+          }])
+          .select(`
+            *,
+            categories:category_id (
+              name
+            )
+          `)
+          .single();
+
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+        
+        setSuccess(`Product "${data.name}" added successfully`);
       }
       
+      // Close modal and reset form
       setShowModal(false);
       setEditingProduct(null);
       setFormData({
@@ -100,21 +169,33 @@ const Products = ({ auth }) => {
         category_id: ""
       });
       
+      // Refresh products list
+      await fetchProducts();
+      
+      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
-      fetchProducts();
+      
     } catch (error) {
       console.error("Error saving product:", error);
-      setError(error.message || "Failed to save product");
+      
+      // Handle specific error codes
+      if (error.code === '23505') {
+        setError("A product with this name already exists");
+      } else if (error.code === '42501') {
+        setError("Permission denied. You don't have access to modify products.");
+      } else {
+        setError(error.message || "Failed to save product");
+      }
     }
   };
 
   const handleEdit = (product) => {
     setEditingProduct(product);
     setFormData({
-      name: product.name,
+      name: product.name || "",
       description: product.description || "",
-      price: product.price,
-      stock_quantity: product.stock_quantity,
+      price: product.price?.toString() || "",
+      stock_quantity: product.stock_quantity?.toString() || "",
       category_id: product.category_id || ""
     });
     setShowModal(true);
@@ -133,13 +214,31 @@ const Products = ({ auth }) => {
     if (!productToDelete) return;
     
     try {
-      await productsApi.delete(productToDelete.id);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productToDelete.id);
+
+      if (error) {
+        console.error("Delete error:", error);
+        
+        if (error.code === '42501') {
+          throw new Error("Permission denied. You don't have access to delete products.");
+        } else if (error.code === '23503') {
+          throw new Error("Cannot delete product because it has existing orders.");
+        } else {
+          throw error;
+        }
+      }
+      
       setSuccess(`Product "${productToDelete.name}" deleted successfully`);
       setShowDeleteConfirm(false);
       setProductToDelete(null);
       
+      // Refresh products list
+      await fetchProducts();
+      
       setTimeout(() => setSuccess(""), 3000);
-      fetchProducts();
     } catch (error) {
       setError(error.message || "Failed to delete product");
       setShowDeleteConfirm(false);
@@ -158,7 +257,14 @@ const Products = ({ auth }) => {
   };
 
   if (loading) {
-    return <div className="loading">Loading products...</div>;
+    return (
+      <div className="products-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading products...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -229,7 +335,10 @@ const Products = ({ auth }) => {
                   <td>{product.category_name || "Uncategorized"}</td>
                   <td>${parseFloat(product.price).toFixed(2)}</td>
                   <td>
-                    <span className={`stock-badge ${product.stock_quantity < 10 ? 'low-stock' : product.stock_quantity === 0 ? 'out-of-stock' : ''}`}>
+                    <span className={`stock-badge ${
+                      product.stock_quantity === 0 ? 'out-of-stock' : 
+                      product.stock_quantity < 10 ? 'low-stock' : ''
+                    }`}>
                       {product.stock_quantity}
                     </span>
                   </td>
@@ -286,8 +395,8 @@ const Products = ({ auth }) => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
               <button 
@@ -390,8 +499,8 @@ const Products = ({ auth }) => {
       )}
 
       {showDeleteConfirm && productToDelete && (
-        <div className="modal-overlay">
-          <div className="modal delete-confirm-modal">
+        <div className="modal-overlay" onClick={cancelDelete}>
+          <div className="modal delete-confirm-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Confirm Delete</h2>
               <button 
