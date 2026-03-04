@@ -10,13 +10,13 @@ const Dashboard = ({ auth, setAuth }) => {
     totalOrders: 0,
     todaySales: 0,
     lowStock: 0,
-    totalCustomers: 2,
     monthlySales: 0
   });
   
   const [recentOrders, setRecentOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   
   const navigate = useNavigate();
 
@@ -26,26 +26,37 @@ const Dashboard = ({ auth, setAuth }) => {
 
   const fetchDashboardData = async () => {
     try {
+      setError("");
+      
+      // Fetch products and orders in parallel
       const [products, orders] = await Promise.all([
-        productsApi.getAll(),
-        ordersApi.getAll()
+        productsApi.getAll().catch(err => {
+          console.error("Error fetching products:", err);
+          return [];
+        }),
+        ordersApi.getAll().catch(err => {
+          console.error("Error fetching orders:", err);
+          return [];
+        })
       ]);
 
+      // Calculate statistics
       const lowStockCount = products.filter(p => p.stock_quantity < 10).length;
       
       const today = new Date().toISOString().split('T')[0];
-      const todayOrders = orders.filter(o => o.created_at.includes(today));
-      const todaySales = todayOrders.reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+      const todayOrders = orders.filter(o => o.created_at?.includes(today));
+      const todaySales = todayOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
       
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const monthlyOrders = orders.filter(o => new Date(o.created_at) >= thirtyDaysAgo);
-      const monthlySales = monthlyOrders.reduce((sum, o) => sum + parseFloat(o.total_amount), 0);
+      const monthlySales = monthlyOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
       
+      // Calculate top products by stock value
       const topProductsByValue = products
         .map(p => ({
           ...p,
-          stock_value: p.stock_quantity * p.price
+          stock_value: (p.stock_quantity || 0) * (p.price || 0)
         }))
         .sort((a, b) => b.stock_value - a.stock_value)
         .slice(0, 5);
@@ -55,26 +66,30 @@ const Dashboard = ({ auth, setAuth }) => {
         totalOrders: orders.length,
         todaySales,
         lowStock: lowStockCount,
-        totalCustomers: 2,
         monthlySales
       });
 
       setRecentOrders(orders.slice(0, 5));
       setTopProducts(topProductsByValue);
-      setLoading(false);
       
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      setError("Failed to load some dashboard data");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setAuth({ isAuthenticated: false, user: null });
-    navigate("/login");
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setAuth({ isAuthenticated: false, user: null });
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const getGreeting = () => {
@@ -156,7 +171,7 @@ const Dashboard = ({ auth, setAuth }) => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="header-left">
-          <h1>{getGreeting()}, {auth.user?.name}!</h1>
+          <h1>{getGreeting()}, {auth.user?.name || 'User'}!</h1>
           <p className="welcome-text">
             {auth.user?.role === 'admin' 
               ? "Here's what's happening with your store today." 
@@ -166,8 +181,8 @@ const Dashboard = ({ auth, setAuth }) => {
         <div className="header-right">
           <div className="user-profile">
             <div className="profile-info">
-              <span className="profile-name">{auth.user?.name}</span>
-              <span className="profile-role">{auth.user?.role}</span>
+              <span className="profile-name">{auth.user?.name || 'User'}</span>
+              <span className="profile-role">{auth.user?.role || 'staff'}</span>
             </div>
           </div>
           <button onClick={handleLogout} className="logout-button">
@@ -175,6 +190,12 @@ const Dashboard = ({ auth, setAuth }) => {
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="error-message" style={{ marginBottom: '1rem' }}>
+          {error}
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card">
@@ -259,12 +280,12 @@ const Dashboard = ({ auth, setAuth }) => {
                       <tr key={order.id}>
                         <td>#{order.id}</td>
                         <td>{order.user_name || "Walk-in Customer"}</td>
-                        <td className="amount">${parseFloat(order.total_amount).toFixed(2)}</td>
+                        <td className="amount">${parseFloat(order.total_amount || 0).toFixed(2)}</td>
                         <td>
-                          {new Date(order.created_at).toLocaleDateString('en-US', {
+                          {order.created_at ? new Date(order.created_at).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric'
-                          })}
+                          }) : 'N/A'}
                         </td>
                         <td>
                           <span className="status completed">Completed</span>
@@ -298,8 +319,8 @@ const Dashboard = ({ auth, setAuth }) => {
                       <p>{product.category_name || "Uncategorized"}</p>
                     </div>
                     <div className="product-meta">
-                      <div>Stock: <strong>{product.stock_quantity}</strong></div>
-                      <div>Value: <strong>${(product.stock_quantity * product.price).toFixed(2)}</strong></div>
+                      <div>Stock: <strong>{product.stock_quantity || 0}</strong></div>
+                      <div>Value: <strong>${((product.stock_quantity || 0) * (product.price || 0)).toFixed(2)}</strong></div>
                     </div>
                   </div>
                 ))
