@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { productsApi, categoriesApi, ordersApi } from "../lib/api";
+import { supabase } from "../lib/supabase";
 import "./POS.css";
 
 const PAYMENT_METHODS = [
@@ -33,20 +33,93 @@ const POS = ({ auth }) => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    checkCurrentUser();
   }, []);
+
+  const checkCurrentUser = async () => {
+    try {
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        return;
+      }
+
+      if (session?.user) {
+        console.log("Current user from session:", session.user);
+        
+        // Check if user exists in users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (userError) {
+          console.log("User not found in users table, creating...");
+          // Create user if not exists
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([{
+              id: session.user.id,
+              username: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              role: session.user.email?.includes('admin') ? 'admin' : 'user',
+              created_at: new Date().toISOString()
+            }]);
+
+          if (insertError) {
+            console.error("Error creating user:", insertError);
+          } else {
+            console.log("User created successfully");
+            setCurrentUser({
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+              role: session.user.email?.includes('admin') ? 'admin' : 'user'
+            });
+          }
+        } else {
+          console.log("User found:", userData);
+          setCurrentUser(userData);
+        }
+      } else {
+        console.log("No active session, using auth prop:", auth);
+        setCurrentUser(auth.user);
+      }
+    } catch (error) {
+      console.error("Error checking user:", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
-      const data = await productsApi.getAll();
-      setProducts(data.map(p => ({
-        ...p,
-        price: safeNumber(p.price),
-        stock_quantity: safeNumber(p.stock_quantity)
-      })));
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories:category_id (
+            name
+          )
+        `)
+        .order('name');
+
+      if (error) throw error;
+
+      const formattedProducts = data.map(product => ({
+        ...product,
+        category_name: product.categories?.name,
+        price: safeNumber(product.price),
+        stock_quantity: safeNumber(product.stock_quantity)
+      }));
+
+      setProducts(formattedProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
       setError("Failed to load products");
@@ -55,8 +128,13 @@ const POS = ({ auth }) => {
 
   const fetchCategories = async () => {
     try {
-      const data = await categoriesApi.getAll();
-      setCategories(data);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -133,6 +211,27 @@ const POS = ({ auth }) => {
     : Math.min(discountAmount, subtotal);
   const total = Math.max(0, subtotal + tax - discount);
 
+  const validateUser = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .eq('id', userId)
+        .single();
+      
+      if (error || !data) {
+        console.error("User validation failed:", error);
+        return false;
+      }
+      
+      console.log("User validated:", data);
+      return true;
+    } catch (error) {
+      console.error("Error validating user:", error);
+      return false;
+    }
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setError("Cart is empty");
@@ -143,35 +242,108 @@ const POS = ({ auth }) => {
     setError("");
     
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      // Get current user
+      let user = currentUser;
+      
+      if (!user) {
+        // Try from localStorage
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          user = JSON.parse(userStr);
+        }
+      }
 
+      if (!user || !user.id) {
+        throw new Error("Please log in to complete order");
+      }
+
+      console.log("Processing order for user:", user);
+
+      // Validate user exists in database
+      const isValidUser = await validateUser(user.id);
+      if (!isValidUser) {
+        throw new Error("User account not found. Please log in again.");
+      }
+
+      // Prepare order data
       const orderData = {
         user_id: user.id,
-        items: cart.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          price: item.price
-        })),
         total_amount: total,
         discount: discount,
         discount_type: discountType,
         discount_value: discountType === "percentage" ? discountPercentage : discountAmount,
         payment_method: paymentMethod,
-        status: 'completed'
+        status: 'completed',
+        created_at: new Date().toISOString()
       };
 
-      await ordersApi.create(orderData);
+      console.log("Creating order with data:", orderData);
+
+      // Create the order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error("Order creation error details:", orderError);
+        
+        // Check for foreign key violation
+        if (orderError.code === '23503') {
+          throw new Error(`User ID ${user.id} not found in database. Please contact support.`);
+        }
+        
+        throw orderError;
+      }
+
+      console.log("Order created:", order);
+
+      // Create order items
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.price * item.quantity
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error("Order items error:", itemsError);
+        throw itemsError;
+      }
+
+      // Update product stock
+      for (const item of cart) {
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ 
+            stock_quantity: item.stock_quantity - item.quantity 
+          })
+          .eq('id', item.id);
+
+        if (stockError) {
+          console.error(`Error updating stock for product ${item.id}:`, stockError);
+        }
+      }
 
       setSuccess("Order completed successfully!");
       setCart([]);
       setDiscountPercentage(0);
       setDiscountAmount(0);
-      fetchProducts();
+      
+      // Refresh products to get updated stock
+      await fetchProducts();
       
       setTimeout(() => {
         setSuccess("");
         setActiveTab("products");
       }, 3000);
+      
     } catch (error) {
       console.error("Checkout error:", error);
       setError(error.message || "Error processing order.");
@@ -192,7 +364,7 @@ const POS = ({ auth }) => {
       <header className="pos-header">
         <div className="header-brand">
           <h1>Point of Sale</h1>
-          <p className="subtitle">Welcome, {auth.user?.name}</p>
+          <p className="subtitle">Welcome, {currentUser?.name || auth.user?.name || 'Guest'}</p>
         </div>
         
         <div className="header-actions">
