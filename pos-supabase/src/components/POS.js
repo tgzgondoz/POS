@@ -38,16 +38,15 @@ const POS = ({ auth }) => {
 
   // Check and verify user at component mount
   useEffect(() => {
-    checkAndVerifyUser();
-  }, []);
-
-  // Fetch products and categories after user is verified
-  useEffect(() => {
-    if (userVerified) {
+    if (auth?.user) {
+      setCurrentUser(auth.user);
+      setUserVerified(true);
       fetchProducts();
       fetchCategories();
+    } else {
+      checkAndVerifyUser();
     }
-  }, [userVerified]);
+  }, [auth]);
 
   const checkAndVerifyUser = async () => {
     try {
@@ -57,12 +56,11 @@ const POS = ({ auth }) => {
       // Method 1: Get from auth prop
       if (auth?.user) {
         console.log("User from auth prop:", auth.user);
-        const verified = await verifyAndCreateUser(auth.user);
-        if (verified) {
-          setCurrentUser(auth.user);
-          setUserVerified(true);
-          return;
-        }
+        setCurrentUser(auth.user);
+        setUserVerified(true);
+        fetchProducts();
+        fetchCategories();
+        return;
       }
 
       // Method 2: Get from localStorage
@@ -70,12 +68,11 @@ const POS = ({ auth }) => {
       if (userStr) {
         const localUser = JSON.parse(userStr);
         console.log("User from localStorage:", localUser);
-        const verified = await verifyAndCreateUser(localUser);
-        if (verified) {
-          setCurrentUser(localUser);
-          setUserVerified(true);
-          return;
-        }
+        setCurrentUser(localUser);
+        setUserVerified(true);
+        fetchProducts();
+        fetchCategories();
+        return;
       }
 
       // Method 3: Get from Supabase session
@@ -86,26 +83,20 @@ const POS = ({ auth }) => {
         throw new Error("Failed to get session");
       }
       
-      console.log("Current session:", session);
-      
       if (session?.user) {
         console.log("Auth user ID:", session.user.id);
         const sessionUser = {
           id: session.user.id,
           email: session.user.email,
           name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-          role: session.user.email?.includes('admin') ? 'admin' : 'user'
+          role: session.user.email?.includes('admin') ? 'admin' : 'cashier'
         };
         
-        const verified = await verifyAndCreateUser(sessionUser);
-        if (verified) {
-          setCurrentUser(sessionUser);
-          setUserVerified(true);
-          
-          // Update localStorage
-          localStorage.setItem("user", JSON.stringify(sessionUser));
-          return;
-        }
+        setCurrentUser(sessionUser);
+        setUserVerified(true);
+        localStorage.setItem("user", JSON.stringify(sessionUser));
+        fetchProducts();
+        fetchCategories();
       } else {
         console.log("No active session");
         setError("Please log in to use POS");
@@ -113,98 +104,6 @@ const POS = ({ auth }) => {
     } catch (error) {
       console.error("Error in user verification:", error);
       setError("User verification failed. Please log in again.");
-    }
-  };
-
-  const verifyAndCreateUser = async (user) => {
-    try {
-      if (!user || !user.id) {
-        console.error("Invalid user object:", user);
-        return false;
-      }
-
-      console.log("Verifying user in database:", user.id);
-
-      // Check if user exists in users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Error checking user:", userError);
-        return false;
-      }
-
-      // If user doesn't exist, create them
-      if (!userData) {
-        console.log("User not found in database, creating...");
-        const created = await createUserInDatabase(user);
-        return created;
-      }
-
-      console.log("User found in database:", userData);
-      
-      // Update current user with database info
-      setCurrentUser(userData);
-      return true;
-      
-    } catch (error) {
-      console.error("Error in verifyAndCreateUser:", error);
-      return false;
-    }
-  };
-
-  const createUserInDatabase = async (user) => {
-    try {
-      const newUser = {
-        id: user.id,
-        username: user.email || user.username || `user_${Date.now()}`,
-        name: user.name || user.email?.split('@')[0] || 'User',
-        role: user.role || (user.email?.includes('admin') ? 'admin' : 'user'),
-        created_at: new Date().toISOString()
-      };
-
-      console.log("Creating user with data:", newUser);
-
-      const { data, error } = await supabase
-        .from('users')
-        .insert([newUser])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating user:", error);
-        
-        // Check if it's a duplicate key error (user was created by another process)
-        if (error.code === '23505') {
-          console.log("User might have been created by another process, trying to fetch...");
-          
-          // Try to fetch the user again
-          const { data: existingUser, error: fetchError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (!fetchError && existingUser) {
-            console.log("Found existing user:", existingUser);
-            setCurrentUser(existingUser);
-            return true;
-          }
-        }
-        
-        return false;
-      }
-
-      console.log("User created successfully:", data);
-      setCurrentUser(data);
-      return true;
-      
-    } catch (error) {
-      console.error("Error in createUserInDatabase:", error);
-      return false;
     }
   };
 
@@ -338,26 +237,6 @@ const POS = ({ auth }) => {
     try {
       console.log("Processing order for user:", currentUser);
 
-      // Double-check user exists in database before creating order
-      const { data: userExists, error: userCheckError } = await supabase
-        .from('users')
-        .select('id, name, role')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
-      if (userCheckError) {
-        console.error("User check error:", userCheckError);
-        throw new Error("Error verifying user account");
-      }
-
-      if (!userExists) {
-        console.log("User not found, attempting to create...");
-        const created = await createUserInDatabase(currentUser);
-        if (!created) {
-          throw new Error("Failed to verify/create user account");
-        }
-      }
-
       // Prepare order data
       const orderData = {
         user_id: currentUser.id,
@@ -391,13 +270,12 @@ const POS = ({ auth }) => {
 
       console.log("Order created:", order);
 
-      // Create order items - WITHOUT subtotal column
+      // Create order items
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
         quantity: item.quantity,
         price: item.price
-        // subtotal is removed - calculate it when needed or add column to database
       }));
 
       console.log("Creating order items:", orderItems);
@@ -493,15 +371,60 @@ const POS = ({ auth }) => {
       <header className="pos-header">
         <div className="header-brand">
           <h1>Point of Sale</h1>
-          <p className="subtitle">Welcome, {currentUser?.name || auth.user?.name || 'User'}</p>
-          <p className="user-role" style={{ fontSize: '0.85rem', color: '#666' }}>
-            Role: {currentUser?.role || 'staff'}
+          <p className="subtitle">
+            Welcome, {currentUser?.name || auth.user?.name || 'User'}
+            {currentUser?.role === 'admin' && (
+              <span style={{ 
+                marginLeft: '0.5rem',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '4px',
+                fontSize: '0.75rem'
+              }}>
+                ADMIN
+              </span>
+            )}
+            {currentUser?.role === 'cashier' && (
+              <span style={{ 
+                marginLeft: '0.5rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '4px',
+                fontSize: '0.75rem'
+              }}>
+                CASHIER
+              </span>
+            )}
           </p>
         </div>
         
         <div className="header-actions">
-          {error && <div className="error-banner">{error}</div>}
-          {success && <div className="success-banner">{success}</div>}
+          {error && (
+            <div className="error-banner" style={{
+              backgroundColor: '#f8d7da',
+              color: '#721c24',
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              marginBottom: '0.5rem'
+            }}>
+              {error}
+              <button onClick={() => setError('')} style={{ marginLeft: '0.5rem' }}>×</button>
+            </div>
+          )}
+          {success && (
+            <div className="success-banner" style={{
+              backgroundColor: '#d4edda',
+              color: '#155724',
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              marginBottom: '0.5rem'
+            }}>
+              {success}
+              <button onClick={() => setSuccess('')} style={{ marginLeft: '0.5rem' }}>×</button>
+            </div>
+          )}
           <div className="cart-summary">
             <div className="summary-item">
               <span className="label">Products</span>
@@ -588,6 +511,13 @@ const POS = ({ auth }) => {
                     >
                       {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart +'}
                     </button>
+                    
+                    {/* Admin-only indicator (optional) */}
+                    {currentUser?.role === 'admin' && (
+                      <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.25rem' }}>
+                        ID: {product.id}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -766,6 +696,18 @@ const POS = ({ auth }) => {
                     </>
                   )}
                 </button>
+
+                {/* Cashier notice */}
+                {currentUser?.role === 'cashier' && (
+                  <p style={{
+                    fontSize: '0.8rem',
+                    color: '#6c757d',
+                    textAlign: 'center',
+                    marginTop: '0.5rem'
+                  }}>
+                    All sales are recorded under your account
+                  </p>
+                )}
               </div>
             )}
           </div>
