@@ -9,6 +9,7 @@ const Users = ({ auth }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [lastRequestTime, setLastRequestTime] = useState(0);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -88,6 +89,20 @@ const Users = ({ auth }) => {
     return true;
   };
 
+  const checkRateLimit = () => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    
+    if (timeSinceLastRequest < 16000) { // 16 seconds in milliseconds
+      const secondsLeft = Math.ceil((16000 - timeSinceLastRequest) / 1000);
+      setError(`Please wait ${secondsLeft} seconds before trying again.`);
+      return false;
+    }
+    
+    setLastRequestTime(now);
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -95,12 +110,15 @@ const Users = ({ auth }) => {
     
     if (!validateForm()) return;
     
+    // Check rate limit for auth operations
+    if (!editingUser && !checkRateLimit()) {
+      return;
+    }
+    
     try {
       if (editingUser) {
-        // Update existing user
         await handleUpdateUser();
       } else {
-        // Create new user
         await handleCreateUser();
       }
       
@@ -114,19 +132,19 @@ const Users = ({ auth }) => {
         role: "cashier"
       });
       
-      // Refresh users list
       await fetchUsers();
       
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => setSuccess(""), 5000);
       
     } catch (error) {
       console.error("Error saving user:", error);
       
-      // Handle specific error codes
       if (error.code === '23505') {
         setError("A user with this email already exists");
       } else if (error.code === '42501') {
         setError("Permission denied. You don't have access to modify users.");
+      } else if (error.message?.includes("16 seconds")) {
+        setError("Please wait a few seconds before trying again. This is a security measure.");
       } else if (error.message) {
         setError(error.message);
       } else {
@@ -136,92 +154,177 @@ const Users = ({ auth }) => {
   };
 
   const handleCreateUser = async () => {
-    // First, create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.username,
-      password: formData.password,
-      options: {
-        data: {
-          name: formData.name,
-          role: formData.role
+    try {
+      console.log("Starting user creation process for:", formData.username);
+      
+      // Step 1: Check if user already exists in public.users
+      const { data: existingUsers, error: searchError } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', formData.username)
+        .maybeSingle();
+
+      if (searchError) {
+        console.error("Error checking existing user:", searchError);
+      }
+
+      if (existingUsers) {
+        throw new Error("A user with this email already exists in the system");
+      }
+
+      // Step 2: Create user directly in auth with auto-confirmation
+      // Note: This requires "Confirm email" to be OFF in Supabase settings
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.username,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            role: formData.role
+          }
+        }
+      });
+
+      if (authError) {
+        console.error("Auth error:", authError);
+        
+        // Handle rate limit
+        if (authError.message?.includes("rate limit") || authError.message?.includes("Rate limit")) {
+          // Wait and retry once
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          
+          const retryResult = await supabase.auth.signUp({
+            email: formData.username,
+            password: formData.password,
+            options: {
+              data: {
+                name: formData.name,
+                role: formData.role
+              }
+            }
+          });
+          
+          if (retryResult.error) throw retryResult.error;
+          authData = retryResult.data;
+        } else {
+          throw authError;
         }
       }
-    });
 
-    if (authError) {
-      console.error("Auth error:", authError);
-      throw authError;
-    }
+      if (!authData?.user) {
+        throw new Error("Failed to create user account");
+      }
 
-    if (!authData.user) {
-      throw new Error("Failed to create user account");
-    }
+      console.log("Auth user created successfully with ID:", authData.user.id);
 
-    console.log("Auth user created:", authData.user);
+      // Step 3: Wait a moment for the auth system to propagate
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Then, create user record in public.users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .insert([{
+      // Step 4: Create user record in public.users
+      const userRecord = {
         id: authData.user.id,
         username: formData.username,
         name: formData.name,
         role: formData.role,
         created_at: new Date().toISOString()
-      }])
-      .select()
-      .single();
+      };
 
-    if (userError) {
-      console.error("User insert error:", userError);
-      
-      // If public.users insert fails, try to clean up auth user
-      if (authData.user) {
-        await supabase.auth.admin.deleteUser(authData.user.id).catch(console.error);
+      console.log("Creating user record:", userRecord);
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .insert([userRecord])
+        .select()
+        .single();
+
+      if (userError) {
+        console.error("User insert error:", userError);
+        
+        // If foreign key error, wait and retry
+        if (userError.code === '23503') {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          const { data: retryData, error: retryError } = await supabase
+            .from('users')
+            .insert([userRecord])
+            .select()
+            .single();
+
+          if (retryError) throw retryError;
+          
+          setSuccess(`User "${retryData.name}" created successfully`);
+          return;
+        }
+        
+        throw userError;
       }
-      
-      throw userError;
-    }
 
-    setSuccess(`User "${userData.name}" created successfully`);
+      console.log("User created successfully:", userData);
+      setSuccess(`User "${userData.name}" created successfully`);
+      
+    } catch (error) {
+      console.error("Error in create user function:", error);
+      throw error;
+    }
   };
 
   const handleUpdateUser = async () => {
-    // Update user in public.users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .update({
-        name: formData.name,
-        role: formData.role,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', editingUser.id)
-      .select()
-      .single();
+    try {
+      console.log("Updating user:", editingUser.id);
+      
+      // Update user in public.users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .update({
+          name: formData.name,
+          role: formData.role,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingUser.id)
+        .select()
+        .single();
 
-    if (userError) {
-      console.error("User update error:", userError);
-      throw userError;
-    }
-
-    // If password is provided, update auth password
-    if (formData.password) {
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: formData.password
-      });
-
-      if (passwordError) {
-        console.error("Password update error:", passwordError);
-        // Don't throw here, user was still updated
-        setSuccess(`User updated successfully, but password change failed: ${passwordError.message}`);
-        return;
+      if (userError) {
+        console.error("User update error:", userError);
+        throw userError;
       }
-    }
 
-    setSuccess(`User "${userData.name}" updated successfully`);
+      // If password is provided, update auth password
+      if (formData.password) {
+        console.log("Updating password...");
+        
+        if (!checkRateLimit()) {
+          setSuccess(`User "${userData.name}" updated successfully, but password was not changed due to rate limiting.`);
+          return;
+        }
+
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.password
+        });
+
+        if (passwordError) {
+          console.error("Password update error:", passwordError);
+          
+          if (passwordError.message?.includes("16 seconds")) {
+            setSuccess(`User "${userData.name}" updated successfully, but password change requires waiting a few seconds.`);
+          } else {
+            setSuccess(`User "${userData.name}" updated successfully, but password change failed: ${passwordError.message}`);
+          }
+          return;
+        }
+        
+        console.log("Password updated successfully");
+      }
+
+      setSuccess(`User "${userData.name}" updated successfully`);
+    } catch (error) {
+      console.error("Error in update user:", error);
+      throw error;
+    }
   };
 
   const handleEdit = (user) => {
+    console.log("Editing user:", user);
     setEditingUser(user);
     setFormData({
       username: user.username,
@@ -244,10 +347,10 @@ const Users = ({ auth }) => {
       setError("");
       setSuccess("");
 
-      // Get user info before deletion
       const userToDelete = users.find(u => u.id === id);
+      console.log("Deleting user:", userToDelete);
       
-      // Delete from public.users table first
+      // Delete from public.users table
       const { error: deleteError } = await supabase
         .from('users')
         .delete()
@@ -265,24 +368,11 @@ const Users = ({ auth }) => {
         }
       }
 
-      // Try to delete from auth.users (requires admin privileges)
-      try {
-        const { error: authDeleteError } = await supabase.auth.admin.deleteUser(id);
-        if (authDeleteError) {
-          console.warn("Could not delete auth user:", authDeleteError);
-          // Don't throw, user record is already deleted
-        }
-      } catch (authError) {
-        console.warn("Auth deletion error:", authError);
-        // User record is already deleted, so we can still show success
-      }
-
-      setSuccess(`User "${userToDelete?.name || id}" deleted successfully`);
+      setSuccess(`User "${userToDelete?.name || id}" deleted successfully.`);
       
-      // Refresh users list
       await fetchUsers();
       
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => setSuccess(""), 5000);
     } catch (error) {
       console.error("Error deleting user:", error);
       setError(error.message || "Failed to delete user");
@@ -295,13 +385,16 @@ const Users = ({ auth }) => {
       return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } catch {
       return 'Invalid date';
     }
   };
 
+  // Check if user is admin
   if (auth.user?.role !== 'admin') {
     return (
       <div className="access-denied">
@@ -394,7 +487,7 @@ const Users = ({ auth }) => {
                   <td>{user.name}</td>
                   <td>
                     <span className={`role-badge ${user.role}`}>
-                      {user.role}
+                      {user.role === 'admin' ? '👑 Admin' : '💼 Cashier'}
                     </span>
                   </td>
                   <td>{formatDate(user.created_at)}</td>
@@ -432,10 +525,10 @@ const Users = ({ auth }) => {
             Total Users: <strong>{users.length}</strong>
           </div>
           <div className="summary">
-            Admins: <strong>{users.filter(u => u.role === 'admin').length}</strong>
+            <span style={{ color: '#dc3545' }}>👑 Admins:</span> <strong>{users.filter(u => u.role === 'admin').length}</strong>
           </div>
           <div className="summary">
-            Cashiers: <strong>{users.filter(u => u.role === 'cashier').length}</strong>
+            <span style={{ color: '#28a745' }}>💼 Cashiers:</span> <strong>{users.filter(u => u.role === 'cashier').length}</strong>
           </div>
         </div>
       </div>
@@ -537,8 +630,9 @@ const Users = ({ auth }) => {
                 <button 
                   type="submit" 
                   className="save-btn"
+                  disabled={loading}
                 >
-                  {editingUser ? 'Update User' : 'Create User'}
+                  {loading ? 'Processing...' : (editingUser ? 'Update User' : 'Create User')}
                 </button>
               </div>
             </form>

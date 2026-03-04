@@ -35,76 +35,118 @@ const POS = ({ auth }) => {
   const [success, setSuccess] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [userVerified, setUserVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // UUID validation function
+  const isValidUUID = (uuid) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
 
   // Check and verify user at component mount
   useEffect(() => {
-    if (auth?.user) {
-      setCurrentUser(auth.user);
-      setUserVerified(true);
-      fetchProducts();
-      fetchCategories();
-    } else {
-      checkAndVerifyUser();
-    }
-  }, [auth]);
+    checkAndVerifyUser();
+  }, []);
 
   const checkAndVerifyUser = async () => {
     try {
+      setIsLoading(true);
       setError("");
       console.log("Starting user verification...");
       
       // Method 1: Get from auth prop
       if (auth?.user) {
         console.log("User from auth prop:", auth.user);
-        setCurrentUser(auth.user);
-        setUserVerified(true);
-        fetchProducts();
-        fetchCategories();
-        return;
+        
+        // Check if the ID is a valid UUID
+        if (auth.user.id && isValidUUID(auth.user.id)) {
+          console.log("Valid UUID found in auth prop:", auth.user.id);
+          setCurrentUser(auth.user);
+          setUserVerified(true);
+          localStorage.setItem("user", JSON.stringify(auth.user));
+          await fetchData();
+          setIsLoading(false);
+          return;
+        } else {
+          console.error("Invalid UUID in auth prop:", auth.user.id);
+        }
       }
 
-      // Method 2: Get from localStorage
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const localUser = JSON.parse(userStr);
-        console.log("User from localStorage:", localUser);
-        setCurrentUser(localUser);
-        setUserVerified(true);
-        fetchProducts();
-        fetchCategories();
-        return;
-      }
-
-      // Method 3: Get from Supabase session
+      // Method 2: Get from Supabase session (most reliable)
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
         console.error("Session error:", sessionError);
-        throw new Error("Failed to get session");
-      }
-      
-      if (session?.user) {
-        console.log("Auth user ID:", session.user.id);
-        const sessionUser = {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-          role: session.user.email?.includes('admin') ? 'admin' : 'cashier'
-        };
+      } else if (session?.user) {
+        console.log("User from session:", session.user);
         
-        setCurrentUser(sessionUser);
-        setUserVerified(true);
-        localStorage.setItem("user", JSON.stringify(sessionUser));
-        fetchProducts();
-        fetchCategories();
-      } else {
-        console.log("No active session");
-        setError("Please log in to use POS");
+        // Session user ID is always a valid UUID
+        if (session.user.id && isValidUUID(session.user.id)) {
+          // Try to get additional user data from users table
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          const user = {
+            id: session.user.id,
+            email: session.user.email,
+            name: userData?.name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            role: userData?.role || (session.user.email?.includes('admin') ? 'admin' : 'cashier')
+          };
+          
+          console.log("Setting user from session:", user);
+          setCurrentUser(user);
+          setUserVerified(true);
+          localStorage.setItem("user", JSON.stringify(user));
+          await fetchData();
+          setIsLoading(false);
+          return;
+        }
       }
+
+      // Method 3: Try localStorage as last resort
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const localUser = JSON.parse(userStr);
+          console.log("User from localStorage:", localUser);
+          
+          if (localUser.id && isValidUUID(localUser.id)) {
+            setCurrentUser(localUser);
+            setUserVerified(true);
+            await fetchData();
+            setIsLoading(false);
+            return;
+          } else {
+            console.error("Invalid UUID in localStorage:", localUser.id);
+            // Clear invalid data
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+          }
+        } catch (e) {
+          console.error("Error parsing user from localStorage:", e);
+          localStorage.removeItem("user");
+        }
+      }
+
+      // No valid user found
+      console.log("No valid user found");
+      setError("Please log in to access the POS system");
+      setUserVerified(false);
+      setIsLoading(false);
+      
     } catch (error) {
       console.error("Error in user verification:", error);
       setError("User verification failed. Please log in again.");
+      setUserVerified(false);
+      setIsLoading(false);
     }
+  };
+
+  const fetchData = async () => {
+    await Promise.all([fetchProducts(), fetchCategories()]);
   };
 
   const fetchProducts = async () => {
@@ -146,6 +188,17 @@ const POS = ({ auth }) => {
       setCategories(data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      window.location.href = '/login';
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
@@ -226,8 +279,18 @@ const POS = ({ auth }) => {
       return;
     }
 
-    if (!currentUser) {
+    if (!currentUser || !currentUser.id) {
       setError("User not authenticated. Please log in again.");
+      return;
+    }
+    
+    // Double-check UUID format
+    if (!isValidUUID(currentUser.id)) {
+      console.error("Invalid UUID format during checkout:", currentUser.id);
+      setError("Session expired. Please log in again.");
+      setTimeout(() => {
+        handleLogout();
+      }, 2000);
       return;
     }
     
@@ -262,10 +325,36 @@ const POS = ({ auth }) => {
         console.error("Order creation error details:", orderError);
         
         if (orderError.code === '23503') {
-          throw new Error(`User account issue. Please log out and log in again.`);
+          // Foreign key violation - user doesn't exist in users table
+          // Try to create the user first
+          const { error: createUserError } = await supabase
+            .from('users')
+            .insert([{
+              id: currentUser.id,
+              username: currentUser.email || currentUser.username,
+              name: currentUser.name || 'User',
+              role: currentUser.role || 'cashier',
+              created_at: new Date().toISOString()
+            }]);
+
+          if (createUserError) {
+            console.error("Error creating user:", createUserError);
+            throw new Error("Could not create user record. Please contact administrator.");
+          }
+
+          // Try to create the order again
+          const { data: retryOrder, error: retryError } = await supabase
+            .from('orders')
+            .insert([orderData])
+            .select()
+            .single();
+
+          if (retryError) throw retryError;
+          
+          order = retryOrder;
+        } else {
+          throw orderError;
         }
-        
-        throw orderError;
       }
 
       console.log("Order created:", order);
@@ -331,6 +420,35 @@ const POS = ({ auth }) => {
     return matchesSearch && matchesCategory;
   });
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="pos-container">
+        <div className="login-required" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '400px',
+          textAlign: 'center',
+          padding: '2rem'
+        }}>
+          <div className="spinner" style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #007bff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '1rem'
+          }}></div>
+          <h2>Loading...</h2>
+          <p style={{ color: '#666' }}>Please wait while we verify your session</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show login required message if user not verified
   if (!userVerified) {
     return (
@@ -346,21 +464,44 @@ const POS = ({ auth }) => {
         }}>
           <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔐</div>
           <h2>Login Required</h2>
-          <p style={{ color: '#666', marginBottom: '1rem' }}>{error || "Please log in to access the POS system"}</p>
-          <button 
-            onClick={() => window.location.href = '/login'}
-            style={{
-              padding: '0.75rem 2rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '1rem'
-            }}
-          >
-            Go to Login
-          </button>
+          <p style={{ color: '#666', marginBottom: '1rem' }}>
+            {error || "You need to be logged in to access the POS system"}
+          </p>
+          <p style={{ color: '#999', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            Please log in with your credentials to continue
+          </p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button 
+              onClick={() => window.location.href = '/login'}
+              style={{
+                padding: '0.75rem 2rem',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              Go to Login
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '0.75rem 2rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -372,7 +513,7 @@ const POS = ({ auth }) => {
         <div className="header-brand">
           <h1>Point of Sale</h1>
           <p className="subtitle">
-            Welcome, {currentUser?.name || auth.user?.name || 'User'}
+            Welcome, {currentUser?.name || 'User'}
             {currentUser?.role === 'admin' && (
               <span style={{ 
                 marginLeft: '0.5rem',
@@ -435,6 +576,21 @@ const POS = ({ auth }) => {
               <span className="value">{formatPrice(total)}</span>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              marginLeft: '1rem'
+            }}
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -512,7 +668,7 @@ const POS = ({ auth }) => {
                       {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart +'}
                     </button>
                     
-                    {/* Admin-only indicator (optional) */}
+                    {/* Admin-only indicator */}
                     {currentUser?.role === 'admin' && (
                       <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.25rem' }}>
                         ID: {product.id}
