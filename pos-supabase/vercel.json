@@ -1,0 +1,12 @@
+{
+  "build": {
+    "env": {
+      "CI": "false"
+    }
+    {
+  "buildCommand": "CI=false npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "build"
+}
+  }
+}
