@@ -120,7 +120,8 @@ const Users = ({ auth }) => {
         throw new Error("A user with this email already exists in the system");
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      let authData;
+      const { data, error: authError } = await supabase.auth.signUp({
         email: formData.username,
         password: formData.password,
         options: {
@@ -153,6 +154,8 @@ const Users = ({ auth }) => {
         } else {
           throw authError;
         }
+      } else {
+        authData = data;
       }
 
       if (!authData?.user) {

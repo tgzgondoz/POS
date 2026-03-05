@@ -29,7 +29,6 @@ const Orders = ({ auth }) => {
         `)
         .order('created_at', { ascending: false });
 
-      // If user is cashier, only show their orders
       if (auth.user?.role === 'cashier') {
         query = query.eq('user_id', auth.user.id);
       }
@@ -305,7 +304,7 @@ const Orders = ({ auth }) => {
             {filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan={auth.user?.role === 'admin' ? 6 : 5} className="no-data">
-                  No orders found matching your filters
+                  No orders found
                 </td>
               </tr>
             ) : (
@@ -314,9 +313,7 @@ const Orders = ({ auth }) => {
                   <td className="order-id">#{order.id}</td>
                   {auth.user?.role === 'admin' && (
                     <td className="customer-cell">
-                      <div className="customer-info">
-                        <span className="customer-name">{order.user_name || "Walk-in Customer"}</span>
-                      </div>
+                      {order.user_name || "Walk-in Customer"}
                     </td>
                   )}
                   <td className="order-amount">${parseFloat(order.total_amount).toFixed(2)}</td>

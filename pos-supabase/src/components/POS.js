@@ -241,7 +241,7 @@ const POS = ({ auth }) => {
 
       console.log("Creating order with data:", orderData);
 
-      const { data: order, error: orderError } = await supabase
+      let { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([orderData])
         .select()
