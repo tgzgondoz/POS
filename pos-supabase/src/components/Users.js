@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import "./Users.css";
 
@@ -18,13 +18,7 @@ const Users = ({ auth }) => {
     role: "cashier"
   });
 
-  useEffect(() => {
-    if (auth.user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [auth.user?.role]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -48,7 +42,13 @@ const Users = ({ auth }) => {
       setError(error.message || "Failed to load users");
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (auth.user?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [auth.user?.role, fetchUsers]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,7 +64,6 @@ const Users = ({ auth }) => {
       return false;
     }
     
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.username)) {
       setError("Please enter a valid email address");
@@ -93,7 +92,7 @@ const Users = ({ auth }) => {
     const now = Date.now();
     const timeSinceLastRequest = now - lastRequestTime;
     
-    if (timeSinceLastRequest < 16000) { // 16 seconds in milliseconds
+    if (timeSinceLastRequest < 16000) {
       const secondsLeft = Math.ceil((16000 - timeSinceLastRequest) / 1000);
       setError(`Please wait ${secondsLeft} seconds before trying again.`);
       return false;
@@ -103,6 +102,166 @@ const Users = ({ auth }) => {
     return true;
   };
 
+  const handleCreateUser = async () => {
+    try {
+      console.log("Starting user creation process for:", formData.username);
+      
+      const { data: existingUsers, error: searchError } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', formData.username)
+        .maybeSingle();
+
+      if (searchError) {
+        console.error("Error checking existing user:", searchError);
+      }
+
+      if (existingUsers) {
+        throw new Error("A user with this email already exists in the system");
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.username,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            role: formData.role
+          }
+        }
+      });
+
+      if (authError) {
+        console.error("Auth error:", authError);
+        
+        if (authError.message?.includes("rate limit") || authError.message?.includes("Rate limit")) {
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          
+          const retryResult = await supabase.auth.signUp({
+            email: formData.username,
+            password: formData.password,
+            options: {
+              data: {
+                name: formData.name,
+                role: formData.role
+              }
+            }
+          });
+          
+          if (retryResult.error) throw retryResult.error;
+          authData = retryResult.data;
+        } else {
+          throw authError;
+        }
+      }
+
+      if (!authData?.user) {
+        throw new Error("Failed to create user account");
+      }
+
+      console.log("Auth user created successfully with ID:", authData.user.id);
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const userRecord = {
+        id: authData.user.id,
+        username: formData.username,
+        name: formData.name,
+        role: formData.role,
+        created_at: new Date().toISOString()
+      };
+
+      console.log("Creating user record:", userRecord);
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .insert([userRecord])
+        .select()
+        .single();
+
+      if (userError) {
+        console.error("User insert error:", userError);
+        
+        if (userError.code === '23503') {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          const { data: retryData, error: retryError } = await supabase
+            .from('users')
+            .insert([userRecord])
+            .select()
+            .single();
+
+          if (retryError) throw retryError;
+          
+          setSuccess(`User "${retryData.name}" created successfully`);
+          return;
+        }
+        
+        throw userError;
+      }
+
+      console.log("User created successfully:", userData);
+      setSuccess(`User "${userData.name}" created successfully`);
+      
+    } catch (error) {
+      console.error("Error in create user function:", error);
+      throw error;
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    try {
+      console.log("Updating user:", editingUser.id);
+      
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .update({
+          name: formData.name,
+          role: formData.role,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingUser.id)
+        .select()
+        .single();
+
+      if (userError) {
+        console.error("User update error:", userError);
+        throw userError;
+      }
+
+      if (formData.password) {
+        console.log("Updating password...");
+        
+        if (!checkRateLimit()) {
+          setSuccess(`User "${userData.name}" updated successfully, but password was not changed due to rate limiting.`);
+          return;
+        }
+
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.password
+        });
+
+        if (passwordError) {
+          console.error("Password update error:", passwordError);
+          
+          if (passwordError.message?.includes("16 seconds")) {
+            setSuccess(`User "${userData.name}" updated successfully, but password change requires waiting a few seconds.`);
+          } else {
+            setSuccess(`User "${userData.name}" updated successfully, but password change failed: ${passwordError.message}`);
+          }
+          return;
+        }
+        
+        console.log("Password updated successfully");
+      }
+
+      setSuccess(`User "${userData.name}" updated successfully`);
+    } catch (error) {
+      console.error("Error in update user:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -110,7 +269,6 @@ const Users = ({ auth }) => {
     
     if (!validateForm()) return;
     
-    // Check rate limit for auth operations
     if (!editingUser && !checkRateLimit()) {
       return;
     }
@@ -153,176 +311,6 @@ const Users = ({ auth }) => {
     }
   };
 
-  const handleCreateUser = async () => {
-    try {
-      console.log("Starting user creation process for:", formData.username);
-      
-      // Step 1: Check if user already exists in public.users
-      const { data: existingUsers, error: searchError } = await supabase
-        .from('users')
-        .select('username')
-        .eq('username', formData.username)
-        .maybeSingle();
-
-      if (searchError) {
-        console.error("Error checking existing user:", searchError);
-      }
-
-      if (existingUsers) {
-        throw new Error("A user with this email already exists in the system");
-      }
-
-      // Step 2: Create user directly in auth with auto-confirmation
-      // Note: This requires "Confirm email" to be OFF in Supabase settings
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.username,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            role: formData.role
-          }
-        }
-      });
-
-      if (authError) {
-        console.error("Auth error:", authError);
-        
-        // Handle rate limit
-        if (authError.message?.includes("rate limit") || authError.message?.includes("Rate limit")) {
-          // Wait and retry once
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          
-          const retryResult = await supabase.auth.signUp({
-            email: formData.username,
-            password: formData.password,
-            options: {
-              data: {
-                name: formData.name,
-                role: formData.role
-              }
-            }
-          });
-          
-          if (retryResult.error) throw retryResult.error;
-          authData = retryResult.data;
-        } else {
-          throw authError;
-        }
-      }
-
-      if (!authData?.user) {
-        throw new Error("Failed to create user account");
-      }
-
-      console.log("Auth user created successfully with ID:", authData.user.id);
-
-      // Step 3: Wait a moment for the auth system to propagate
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Step 4: Create user record in public.users
-      const userRecord = {
-        id: authData.user.id,
-        username: formData.username,
-        name: formData.name,
-        role: formData.role,
-        created_at: new Date().toISOString()
-      };
-
-      console.log("Creating user record:", userRecord);
-
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert([userRecord])
-        .select()
-        .single();
-
-      if (userError) {
-        console.error("User insert error:", userError);
-        
-        // If foreign key error, wait and retry
-        if (userError.code === '23503') {
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          const { data: retryData, error: retryError } = await supabase
-            .from('users')
-            .insert([userRecord])
-            .select()
-            .single();
-
-          if (retryError) throw retryError;
-          
-          setSuccess(`User "${retryData.name}" created successfully`);
-          return;
-        }
-        
-        throw userError;
-      }
-
-      console.log("User created successfully:", userData);
-      setSuccess(`User "${userData.name}" created successfully`);
-      
-    } catch (error) {
-      console.error("Error in create user function:", error);
-      throw error;
-    }
-  };
-
-  const handleUpdateUser = async () => {
-    try {
-      console.log("Updating user:", editingUser.id);
-      
-      // Update user in public.users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .update({
-          name: formData.name,
-          role: formData.role,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingUser.id)
-        .select()
-        .single();
-
-      if (userError) {
-        console.error("User update error:", userError);
-        throw userError;
-      }
-
-      // If password is provided, update auth password
-      if (formData.password) {
-        console.log("Updating password...");
-        
-        if (!checkRateLimit()) {
-          setSuccess(`User "${userData.name}" updated successfully, but password was not changed due to rate limiting.`);
-          return;
-        }
-
-        const { error: passwordError } = await supabase.auth.updateUser({
-          password: formData.password
-        });
-
-        if (passwordError) {
-          console.error("Password update error:", passwordError);
-          
-          if (passwordError.message?.includes("16 seconds")) {
-            setSuccess(`User "${userData.name}" updated successfully, but password change requires waiting a few seconds.`);
-          } else {
-            setSuccess(`User "${userData.name}" updated successfully, but password change failed: ${passwordError.message}`);
-          }
-          return;
-        }
-        
-        console.log("Password updated successfully");
-      }
-
-      setSuccess(`User "${userData.name}" updated successfully`);
-    } catch (error) {
-      console.error("Error in update user:", error);
-      throw error;
-    }
-  };
-
   const handleEdit = (user) => {
     console.log("Editing user:", user);
     setEditingUser(user);
@@ -350,7 +338,6 @@ const Users = ({ auth }) => {
       const userToDelete = users.find(u => u.id === id);
       console.log("Deleting user:", userToDelete);
       
-      // Delete from public.users table
       const { error: deleteError } = await supabase
         .from('users')
         .delete()
@@ -394,7 +381,6 @@ const Users = ({ auth }) => {
     }
   };
 
-  // Check if user is admin
   if (auth.user?.role !== 'admin') {
     return (
       <div className="access-denied">

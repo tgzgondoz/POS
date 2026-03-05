@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ordersApi, usersApi } from "../lib/api";
+import React, { useState, useEffect, useCallback } from "react";
+import { supabase } from "../lib/supabase";
 import "./Orders.css";
 
 const Orders = ({ auth }) => {
@@ -12,52 +12,68 @@ const Orders = ({ auth }) => {
   const [selectedUserId, setSelectedUserId] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchOrders();
-    if (auth.user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, []);
-
-  useEffect(() => {
-    filterOrders();
-  }, [selectedUserId, dateFilter, paymentFilter, orders]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      const data = await ordersApi.getAll();
+      setLoading(true);
       
+      let query = supabase
+        .from('orders')
+        .select(`
+          *,
+          users:user_id (
+            name,
+            username
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // If user is cashier, only show their orders
       if (auth.user?.role === 'cashier') {
-        const userOrders = data.filter(order => 
-          order.user_id === auth.user?.id
-        );
-        setOrders(userOrders);
-      } else {
-        setOrders(data);
+        query = query.eq('user_id', auth.user.id);
       }
-      
+
+      const { data: ordersData, error: ordersError } = await query;
+
+      if (ordersError) throw ordersError;
+
+      const formattedOrders = ordersData.map(order => ({
+        ...order,
+        user_name: order.users?.name,
+        total_amount: parseFloat(order.total_amount)
+      }));
+
+      setOrders(formattedOrders);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching orders:", error);
+      setError("Failed to load orders");
       setLoading(false);
     }
-  };
+  }, [auth.user?.id, auth.user?.role]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
+    if (auth.user?.role !== 'admin') return;
+    
     try {
-      const data = await usersApi.getAll();
-      setUsers(data);
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .order('name');
+
+      if (error) throw error;
+      setUsers(data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
-  };
+  }, [auth.user?.role]);
 
-  const filterOrders = () => {
+  const filterOrders = useCallback(() => {
     let filtered = [...orders];
 
     if (selectedUserId !== "all") {
-      filtered = filtered.filter(order => order.user_id == selectedUserId);
+      filtered = filtered.filter(order => order.user_id === selectedUserId);
     }
 
     if (dateFilter !== "all") {
@@ -102,15 +118,62 @@ const Orders = ({ auth }) => {
     }
 
     setFilteredOrders(filtered);
-  };
+  }, [orders, selectedUserId, dateFilter, paymentFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+    fetchUsers();
+  }, [fetchOrders, fetchUsers]);
+
+  useEffect(() => {
+    filterOrders();
+  }, [filterOrders]);
 
   const viewOrderDetails = async (order) => {
     try {
-      const data = await ordersApi.getById(order.id);
-      setSelectedOrder(data);
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          users:user_id (
+            name,
+            username
+          )
+        `)
+        .eq('id', order.id)
+        .single();
+
+      if (orderError) throw orderError;
+
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          *,
+          products:product_id (
+            name
+          )
+        `)
+        .eq('order_id', order.id);
+
+      if (itemsError) throw itemsError;
+
+      setSelectedOrder({
+        order: {
+          ...orderData,
+          user_name: orderData.users?.name,
+          total_amount: parseFloat(orderData.total_amount)
+        },
+        items: items.map(item => ({
+          ...item,
+          product_name: item.products?.name,
+          price: parseFloat(item.price)
+        }))
+      });
+      
       setShowOrderDetails(true);
     } catch (error) {
       console.error("Error fetching order details:", error);
+      setError("Failed to load order details");
     }
   };
 
@@ -282,7 +345,7 @@ const Orders = ({ auth }) => {
         <div className="modal-overlay">
           <div className="modal order-details-modal">
             <div className="modal-header">
-              <h2>Receipt - Order #{selectedOrder.order.id}</h2>
+              <h2>Order #{selectedOrder.order.id} Details</h2>
               <button 
                 className="close-btn"
                 onClick={() => setShowOrderDetails(false)}
@@ -292,102 +355,42 @@ const Orders = ({ auth }) => {
             </div>
             
             <div className="modal-content">
-              <div className="receipt-header">
-                <h3>Car Spare Parts POS</h3>
-                <p className="store-info">
-                  <span>📞 Phone: (123) 456-7890</span>
-                </p>
-                <div className="receipt-divider"></div>
+              <div className="order-info">
+                <p><strong>Customer:</strong> {selectedOrder.order.user_name || "Walk-in Customer"}</p>
+                <p><strong>Date:</strong> {formatDate(selectedOrder.order.created_at)}</p>
+                <p><strong>Payment Method:</strong> {selectedOrder.order.payment_method}</p>
+                <p><strong>Status:</strong> {selectedOrder.order.status}</p>
               </div>
 
-              <div className="receipt-info">
-                <div className="info-row">
-                  <span className="info-label">Order ID:</span>
-                  <span className="info-value">#{selectedOrder.order.id}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Customer:</span>
-                  <span className="info-value">
-                    {selectedOrder.order.user_name || "Walk-in Customer"}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Date:</span>
-                  <span className="info-value">{formatDate(selectedOrder.order.created_at)}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Payment:</span>
-                  <span className={`payment-type ${selectedOrder.order.payment_method}`}>
-                    {selectedOrder.order.payment_method.toUpperCase()}
-                  </span>
-                </div>
-                <div className="receipt-divider"></div>
-              </div>
-
-              <div className="receipt-items">
-                <h4>Items Purchased:</h4>
-                <table className="receipt-items-table">
+              <div className="order-items">
+                <h3>Items</h3>
+                <table className="items-table">
                   <thead>
                     <tr>
                       <th>Product</th>
-                      <th className="text-right">Qty</th>
-                      <th className="text-right">Price</th>
-                      <th className="text-right">Total</th>
+                      <th>Quantity</th>
+                      <th>Price</th>
+                      <th>Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedOrder.items.map((item, index) => (
                       <tr key={index}>
-                        <td className="product-name">{item.product_name}</td>
-                        <td className="text-right">{item.quantity}</td>
-                        <td className="text-right">${parseFloat(item.price).toFixed(2)}</td>
-                        <td className="text-right">${(item.quantity * item.price).toFixed(2)}</td>
+                        <td>{item.product_name}</td>
+                        <td>{item.quantity}</td>
+                        <td>${item.price.toFixed(2)}</td>
+                        <td>${(item.quantity * item.price).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              <div className="receipt-summary">
-                <div className="receipt-divider"></div>
-                <div className="summary-row">
-                  <span>Subtotal:</span>
-                  <span>${(parseFloat(selectedOrder.order.total_amount) / 1.08).toFixed(2)}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Tax (8%):</span>
-                  <span>${(parseFloat(selectedOrder.order.total_amount) * 0.08 / 1.08).toFixed(2)}</span>
-                </div>
+              <div className="order-totals">
                 {selectedOrder.order.discount > 0 && (
-                  <div className="summary-row discount">
-                    <span>Discount:</span>
-                    <span>-${parseFloat(selectedOrder.order.discount).toFixed(2)}</span>
-                  </div>
+                  <p><strong>Discount:</strong> -${selectedOrder.order.discount.toFixed(2)}</p>
                 )}
-                <div className="summary-row total">
-                  <span>Grand Total:</span>
-                  <span>${parseFloat(selectedOrder.order.total_amount).toFixed(2)}</span>
-                </div>
-                <div className="receipt-divider"></div>
-              </div>
-
-              <div className="receipt-footer">
-                <p className="thank-you">Thank you for your purchase!</p>
-              </div>
-
-              <div className="modal-actions">
-                <button 
-                  className="print-btn"
-                  onClick={() => window.print()}
-                >
-                  🖨️ Print Receipt
-                </button>
-                <button 
-                  className="close-modal-btn"
-                  onClick={() => setShowOrderDetails(false)}
-                >
-                  Close
-                </button>
+                <p><strong>Total:</strong> ${selectedOrder.order.total_amount.toFixed(2)}</p>
               </div>
             </div>
           </div>
