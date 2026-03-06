@@ -26,6 +26,15 @@ const Dashboard = ({ auth, setAuth }) => {
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState("month");
   
+  // Report state
+  const [showReports, setShowReports] = useState(false);
+  const [reportType, setReportType] = useState("sales");
+  const [reportData, setReportData] = useState([]);
+  const [reportSummary, setReportSummary] = useState({});
+  const [reportLoading, setReportLoading] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  
   const navigate = useNavigate();
 
   const fetchDashboardData = useCallback(async () => {
@@ -179,6 +188,350 @@ const Dashboard = ({ auth, setAuth }) => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Report Functions
+  const getDateRangeForReport = () => {
+    const end = new Date();
+    let start = new Date();
+
+    switch (dateRange) {
+      case "today":
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case "week":
+        start.setDate(start.getDate() - 7);
+        break;
+      case "month":
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case "quarter":
+        start.setMonth(start.getMonth() - 3);
+        break;
+      case "year":
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          start = new Date(customStartDate);
+          end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+        }
+        break;
+      default:
+        break;
+    }
+
+    return { start, end };
+  };
+
+  const fetchSalesReport = async (start, end) => {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        users:user_id (name)
+      `)
+      .gte('created_at', start.toISOString())
+      .lte('created_at', end.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      user_name: order.users?.name,
+      total_amount: parseFloat(order.total_amount),
+      profit_amount: parseFloat(order.profit_amount) || order.total_amount * 0.3
+    }));
+
+    const totalSales = formattedOrders.reduce((sum, o) => sum + o.total_amount, 0);
+    const totalProfit = formattedOrders.reduce((sum, o) => sum + o.profit_amount, 0);
+    const avgOrderValue = formattedOrders.length > 0 ? totalSales / formattedOrders.length : 0;
+
+    setReportData(formattedOrders);
+    setReportSummary({
+      totalOrders: formattedOrders.length,
+      totalSales,
+      totalProfit,
+      avgOrderValue,
+      profitMargin: totalSales > 0 ? (totalProfit / totalSales) * 100 : 0
+    });
+  };
+
+  const fetchProductsReport = async (start, end) => {
+    const { data: orderItems, error } = await supabase
+      .from('order_items')
+      .select(`
+        *,
+        products:product_id (name, category_id, categories (name)),
+        orders!inner (created_at)
+      `)
+      .gte('orders.created_at', start.toISOString())
+      .lte('orders.created_at', end.toISOString());
+
+    if (error) throw error;
+
+    const productMap = new Map();
+    orderItems.forEach(item => {
+      const productId = item.product_id;
+      const productName = item.products?.name;
+      const categoryName = item.products?.categories?.name;
+      
+      if (!productMap.has(productId)) {
+        productMap.set(productId, {
+          id: productId,
+          name: productName,
+          category: categoryName,
+          quantity: 0,
+          revenue: 0,
+          profit: 0,
+          cost: 0
+        });
+      }
+      
+      const product = productMap.get(productId);
+      product.quantity += item.quantity;
+      product.revenue += item.price * item.quantity;
+      product.profit += (item.price - item.cost_price) * item.quantity;
+      product.cost += item.cost_price * item.quantity;
+    });
+
+    const products = Array.from(productMap.values())
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const totalRevenue = products.reduce((sum, p) => sum + p.revenue, 0);
+    const totalProfit = products.reduce((sum, p) => sum + p.profit, 0);
+
+    setReportData(products);
+    setReportSummary({
+      totalProducts: products.length,
+      totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0),
+      totalRevenue,
+      totalProfit,
+      avgMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+    });
+  };
+
+  const fetchCategoriesReport = async (start, end) => {
+    const { data: orderItems, error } = await supabase
+      .from('order_items')
+      .select(`
+        *,
+        products:product_id (
+          categories:category_id (id, name)
+        ),
+        orders!inner (created_at)
+      `)
+      .gte('orders.created_at', start.toISOString())
+      .lte('orders.created_at', end.toISOString());
+
+    if (error) throw error;
+
+    const categoryMap = new Map();
+    orderItems.forEach(item => {
+      const categoryId = item.products?.categories?.id || 'uncategorized';
+      const categoryName = item.products?.categories?.name || 'Uncategorized';
+      
+      if (!categoryMap.has(categoryId)) {
+        categoryMap.set(categoryId, {
+          id: categoryId,
+          name: categoryName,
+          quantity: 0,
+          revenue: 0,
+          profit: 0,
+          productCount: new Set()
+        });
+      }
+      
+      const category = categoryMap.get(categoryId);
+      category.quantity += item.quantity;
+      category.revenue += item.price * item.quantity;
+      category.profit += (item.price - item.cost_price) * item.quantity;
+      category.productCount.add(item.product_id);
+    });
+
+    const categories = Array.from(categoryMap.values()).map(cat => ({
+      ...cat,
+      productCount: cat.productCount.size
+    }));
+
+    const totalRevenue = categories.reduce((sum, c) => sum + c.revenue, 0);
+    const totalProfit = categories.reduce((sum, c) => sum + c.profit, 0);
+
+    setReportData(categories);
+    setReportSummary({
+      totalCategories: categories.length,
+      totalRevenue,
+      totalProfit,
+      avgMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+    });
+  };
+
+  const fetchProfitReport = async (start, end) => {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        users:user_id (name)
+      `)
+      .gte('created_at', start.toISOString())
+      .lte('created_at', end.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const dailyProfit = {};
+    orders.forEach(order => {
+      const date = new Date(order.created_at).toLocaleDateString();
+      if (!dailyProfit[date]) {
+        dailyProfit[date] = {
+          date,
+          revenue: 0,
+          profit: 0,
+          orders: 0
+        };
+      }
+      dailyProfit[date].revenue += parseFloat(order.total_amount);
+      dailyProfit[date].profit += parseFloat(order.profit_amount) || order.total_amount * 0.3;
+      dailyProfit[date].orders += 1;
+    });
+
+    const profitData = Object.values(dailyProfit).sort((a, b) => 
+      new Date(b.date) - new Date(a.date)
+    );
+
+    const totalRevenue = profitData.reduce((sum, d) => sum + d.revenue, 0);
+    const totalProfit = profitData.reduce((sum, d) => sum + d.profit, 0);
+    const totalOrders = profitData.reduce((sum, d) => sum + d.orders, 0);
+
+    setReportData(profitData);
+    setReportSummary({
+      totalOrders,
+      totalRevenue,
+      totalProfit,
+      avgDailyProfit: profitData.length > 0 ? totalProfit / profitData.length : 0,
+      avgOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+      profitMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+    });
+  };
+
+  const fetchStaffReport = async (start, end) => {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        users:user_id (name, role)
+      `)
+      .gte('created_at', start.toISOString())
+      .lte('created_at', end.toISOString());
+
+    if (error) throw error;
+
+    const staffMap = new Map();
+    orders.forEach(order => {
+      const userId = order.user_id;
+      const userName = order.users?.name || 'Unknown';
+      
+      if (!staffMap.has(userId)) {
+        staffMap.set(userId, {
+          id: userId,
+          name: userName,
+          role: order.users?.role,
+          orders: 0,
+          revenue: 0,
+          profit: 0
+        });
+      }
+      
+      const staff = staffMap.get(userId);
+      staff.orders += 1;
+      staff.revenue += parseFloat(order.total_amount);
+      staff.profit += parseFloat(order.profit_amount) || order.total_amount * 0.3;
+    });
+
+    const staffData = Array.from(staffMap.values())
+      .sort((a, b) => b.revenue - a.revenue);
+
+    const totalRevenue = staffData.reduce((sum, s) => sum + s.revenue, 0);
+    const totalProfit = staffData.reduce((sum, s) => sum + s.profit, 0);
+    const totalOrders = staffData.reduce((sum, s) => sum + s.orders, 0);
+
+    setReportData(staffData);
+    setReportSummary({
+      totalStaff: staffData.length,
+      totalOrders,
+      totalRevenue,
+      totalProfit,
+      avgPerStaff: staffData.length > 0 ? totalRevenue / staffData.length : 0
+    });
+  };
+
+  const generateReport = async () => {
+    setReportLoading(true);
+    setError("");
+
+    try {
+      const { start, end } = getDateRangeForReport();
+
+      switch (reportType) {
+        case "sales":
+          await fetchSalesReport(start, end);
+          break;
+        case "products":
+          await fetchProductsReport(start, end);
+          break;
+        case "categories":
+          await fetchCategoriesReport(start, end);
+          break;
+        case "profit":
+          await fetchProfitReport(start, end);
+          break;
+        case "staff":
+          await fetchStaffReport(start, end);
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Error generating report:", error);
+      setError("Failed to generate report");
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    if (reportData.length === 0) return;
+
+    const headers = Object.keys(reportData[0]).filter(key => 
+      !['id', 'users', 'products', 'categories'].includes(key)
+    );
+    
+    const csvContent = [
+      headers.join(','),
+      ...reportData.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          if (typeof value === 'string' && value.includes(',')) {
+            return `"${value}"`;
+          }
+          if (value instanceof Date) {
+            return value.toISOString();
+          }
+          return value;
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -269,6 +622,14 @@ const Dashboard = ({ auth, setAuth }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
+  };
+
+  const formatPercent = (value) => {
+    return `${value.toFixed(1)}%`;
+  };
+
+  const formatNumber = (value) => {
+    return new Intl.NumberFormat('en-US').format(value);
   };
 
   if (loading) {
@@ -402,8 +763,191 @@ const Dashboard = ({ auth, setAuth }) => {
               </div>
             </Link>
           ))}
+          {auth.user?.role === 'admin' && (
+            <button
+              onClick={() => setShowReports(!showReports)}
+              className={`action-card ${showReports ? 'active' : ''}`}
+              style={{ background: showReports ? '#4299e1' : '#f7fafc', cursor: 'pointer', border: 'none', width: '100%', textAlign: 'left' }}
+            >
+              <div className="action-icon">📊</div>
+              <div className="action-content">
+                <h3>{showReports ? 'Hide Reports' : 'Show Reports'}</h3>
+                <p>Generate business reports</p>
+              </div>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Reports Section */}
+      {auth.user?.role === 'admin' && showReports && (
+        <div className="reports-section">
+          <div className="reports-header">
+            <h2>Reports & Analytics</h2>
+            <div className="reports-controls">
+              <button 
+                className="export-btn"
+                onClick={exportToCSV}
+                disabled={reportData.length === 0 || reportLoading}
+              >
+                📥 Export CSV
+              </button>
+              <button 
+                className="generate-btn"
+                onClick={generateReport}
+                disabled={reportLoading}
+              >
+                {reportLoading ? 'Generating...' : 'Generate Report'}
+              </button>
+            </div>
+          </div>
+
+          <div className="report-controls">
+            <div className="control-group">
+              <label>Report Type</label>
+              <select 
+                value={reportType} 
+                onChange={(e) => setReportType(e.target.value)}
+                className="report-select"
+                disabled={reportLoading}
+              >
+                <option value="sales">Sales Report</option>
+                <option value="products">Product Performance</option>
+                <option value="categories">Category Analysis</option>
+                <option value="profit">Profit Analysis</option>
+                <option value="staff">Staff Performance</option>
+              </select>
+            </div>
+
+            <div className="control-group">
+              <label>Date Range</label>
+              <select 
+                value={dateRange} 
+                onChange={(e) => setDateRange(e.target.value)}
+                className="date-select"
+                disabled={reportLoading}
+              >
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
+                <option value="quarter">Last 90 Days</option>
+                <option value="year">Last Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            {dateRange === 'custom' && (
+              <div className="custom-date-range">
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="date-input"
+                  disabled={reportLoading}
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="date-input"
+                  disabled={reportLoading}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Report Summary Cards */}
+          {Object.keys(reportSummary).length > 0 && (
+            <div className="report-summary">
+              {Object.entries(reportSummary).map(([key, value]) => (
+                <div key={key} className="summary-card">
+                  <h3>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</h3>
+                  <p className="summary-value">
+                    {typeof value === 'number' 
+                      ? key.includes('Margin') || key.includes('Percent')
+                        ? formatPercent(value)
+                        : key.includes('Revenue') || key.includes('Sales') || key.includes('Profit') || key.includes('Value')
+                          ? formatCurrency(value)
+                          : formatNumber(value)
+                      : value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Report Data Table */}
+          {reportLoading ? (
+            <div className="report-loading">
+              <div className="spinner"></div>
+              <p>Generating report...</p>
+            </div>
+          ) : reportData.length > 0 ? (
+            <div className="report-table-container">
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    {Object.keys(reportData[0])
+                      .filter(key => !['id', 'users', 'products', 'categories'].includes(key))
+                      .map(key => (
+                        <th key={key}>
+                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.map((row, index) => (
+                    <tr key={index}>
+                      {Object.entries(row)
+                        .filter(([key]) => !['id', 'users', 'products', 'categories'].includes(key))
+                        .map(([key, value], i) => {
+                          let displayValue = value;
+                          if (typeof value === 'number') {
+                            if (key.includes('price') || key.includes('amount') || key.includes('revenue') || key.includes('profit') || key.includes('value') || key.includes('cost')) {
+                              displayValue = formatCurrency(value);
+                            } else if (key.includes('margin') || key.includes('percent')) {
+                              displayValue = formatPercent(value);
+                            } else {
+                              displayValue = formatNumber(value);
+                            }
+                          }
+                          
+                          let cellClass = '';
+                          if (key.includes('profit') || key.includes('margin')) {
+                            cellClass = value >= 0 ? 'positive' : 'negative';
+                          }
+                          
+                          return (
+                            <td key={i} className={cellClass}>
+                              {displayValue?.toString() || '-'}
+                            </td>
+                          );
+                        })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="no-data">
+              <p>Select report type and date range, then click Generate Report</p>
+            </div>
+          )}
+
+          {reportData.length > 0 && (
+            <div className="report-footer">
+              <p>
+                <strong>Report Period:</strong> {new Date(getDateRangeForReport().start).toLocaleDateString()} - {new Date(getDateRangeForReport().end).toLocaleDateString()}
+              </p>
+              <p>
+                <strong>Total Records:</strong> {reportData.length}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {auth.user?.role === 'admin' && (
         <>
@@ -411,7 +955,16 @@ const Dashboard = ({ auth, setAuth }) => {
           <div className="profit-leaders-section">
             <div className="section-header">
               <h2>Top Profit Generators</h2>
-              <Link to="/reports" className="view-all">View Full Report →</Link>
+              <button 
+                onClick={() => {
+                  setShowReports(true);
+                  setReportType("products");
+                  generateReport();
+                }} 
+                className="view-all"
+              >
+                View Full Report →
+              </button>
             </div>
             <div className="profit-leaders-grid">
               {profitLeaders.length > 0 ? (
@@ -448,7 +1001,16 @@ const Dashboard = ({ auth, setAuth }) => {
             <div className="recent-orders">
               <div className="section-header">
                 <h2>Recent Orders</h2>
-                <Link to="/orders" className="view-all">View All →</Link>
+                <button 
+                  onClick={() => {
+                    setShowReports(true);
+                    setReportType("sales");
+                    generateReport();
+                  }} 
+                  className="view-all"
+                >
+                  View All →
+                </button>
               </div>
               <div className="orders-table">
                 <table>
@@ -499,7 +1061,16 @@ const Dashboard = ({ auth, setAuth }) => {
             <div className="top-products">
               <div className="section-header">
                 <h2>Inventory Value</h2>
-                <Link to="/inventory" className="view-all">View Inventory →</Link>
+                <button 
+                  onClick={() => {
+                    setShowReports(true);
+                    setReportType("products");
+                    generateReport();
+                  }} 
+                  className="view-all"
+                >
+                  View Inventory →
+                </button>
               </div>
               <div className="products-list">
                 {topProducts.length > 0 ? (
