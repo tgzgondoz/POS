@@ -16,6 +16,7 @@ const Products = ({ auth }) => {
     name: "",
     description: "",
     price: "",
+    cost_price: "",
     stock_quantity: "",
     category_id: ""
   });
@@ -46,6 +47,7 @@ const Products = ({ auth }) => {
         ...product,
         category_name: product.categories?.name || 'Uncategorized',
         price: parseFloat(product.price) || 0,
+        cost_price: parseFloat(product.cost_price) || 0,
         stock_quantity: parseInt(product.stock_quantity) || 0
       }));
 
@@ -93,7 +95,7 @@ const Products = ({ auth }) => {
     }
     
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      setError("Valid price is required");
+      setError("Valid selling price is required");
       return;
     }
     
@@ -101,12 +103,18 @@ const Products = ({ auth }) => {
       setError("Valid stock quantity is required");
       return;
     }
+
+    // If cost price is not provided, set default (70% of selling price)
+    const costPrice = formData.cost_price 
+      ? parseFloat(formData.cost_price) 
+      : parseFloat(formData.price) * 0.7;
     
     try {
       const productData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),
+        cost_price: costPrice,
         stock_quantity: parseInt(formData.stock_quantity),
         category_id: formData.category_id || null,
         updated_at: new Date().toISOString()
@@ -165,6 +173,7 @@ const Products = ({ auth }) => {
         name: "",
         description: "",
         price: "",
+        cost_price: "",
         stock_quantity: "",
         category_id: ""
       });
@@ -195,6 +204,7 @@ const Products = ({ auth }) => {
       name: product.name || "",
       description: product.description || "",
       price: product.price?.toString() || "",
+      cost_price: product.cost_price?.toString() || "",
       stock_quantity: product.stock_quantity?.toString() || "",
       category_id: product.category_id || ""
     });
@@ -251,6 +261,27 @@ const Products = ({ auth }) => {
     setProductToDelete(null);
   };
 
+  const calculateProfit = (product) => {
+    const sellingPrice = parseFloat(product.price) || 0;
+    const costPrice = parseFloat(product.cost_price) || (sellingPrice * 0.7);
+    return sellingPrice - costPrice;
+  };
+
+  const calculateMargin = (product) => {
+    const sellingPrice = parseFloat(product.price) || 0;
+    const profit = calculateProfit(product);
+    return sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
   const clearMessages = () => {
     setError("");
     setSuccess("");
@@ -287,6 +318,7 @@ const Products = ({ auth }) => {
                   name: "",
                   description: "",
                   price: "",
+                  cost_price: "",
                   stock_quantity: "",
                   category_id: ""
                 });
@@ -307,6 +339,41 @@ const Products = ({ auth }) => {
         </div>
       )}
 
+      {/* Summary Cards */}
+      <div className="products-summary">
+        <div className="summary-card">
+          <h3>Total Products</h3>
+          <p className="summary-number">{products.length}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Total Stock</h3>
+          <p className="summary-number">
+            {products.reduce((sum, p) => sum + p.stock_quantity, 0)} units
+          </p>
+        </div>
+        <div className="summary-card">
+          <h3>Inventory Value</h3>
+          <p className="summary-number">
+            {formatCurrency(products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0))}
+          </p>
+        </div>
+        <div className="summary-card profit-card">
+          <h3>Total Cost</h3>
+          <p className="summary-number">
+            {formatCurrency(products.reduce((sum, p) => sum + ((p.cost_price || p.price * 0.7) * p.stock_quantity), 0))}
+          </p>
+        </div>
+        <div className="summary-card profit-card">
+          <h3>Potential Profit</h3>
+          <p className="summary-number profit">
+            {formatCurrency(products.reduce((sum, p) => {
+              const profit = (p.price - (p.cost_price || p.price * 0.7)) * p.stock_quantity;
+              return sum + profit;
+            }, 0))}
+          </p>
+        </div>
+      </div>
+
       <div className="products-table-container">
         <table className="products-table">
           <thead>
@@ -314,7 +381,10 @@ const Products = ({ auth }) => {
               <th>ID</th>
               <th>Name</th>
               <th>Category</th>
-              <th>Price</th>
+              <th>Selling Price</th>
+              <th>Cost Price</th>
+              <th>Profit</th>
+              <th>Margin</th>
               <th>Stock</th>
               <th>Status</th>
               {auth.user?.role === 'admin' && <th>Actions</th>}
@@ -323,56 +393,71 @@ const Products = ({ auth }) => {
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={auth.user?.role === 'admin' ? 7 : 6} className="no-data">
+                <td colSpan={auth.user?.role === 'admin' ? 10 : 9} className="no-data">
                   No products found. Add your first product!
                 </td>
               </tr>
             ) : (
-              products.map(product => (
-                <tr key={product.id}>
-                  <td>#{product.id}</td>
-                  <td className="product-name">{product.name}</td>
-                  <td>{product.category_name || "Uncategorized"}</td>
-                  <td>${parseFloat(product.price).toFixed(2)}</td>
-                  <td>
-                    <span className={`stock-badge ${
-                      product.stock_quantity === 0 ? 'out-of-stock' : 
-                      product.stock_quantity < 10 ? 'low-stock' : ''
-                    }`}>
-                      {product.stock_quantity}
-                    </span>
-                  </td>
-                  <td>
-                    {product.stock_quantity === 0 ? (
-                      <span className="status out-of-stock">Out of Stock</span>
-                    ) : product.stock_quantity < 10 ? (
-                      <span className="status low-stock">Low Stock</span>
-                    ) : (
-                      <span className="status in-stock">In Stock</span>
-                    )}
-                  </td>
-                  {auth.user?.role === 'admin' && (
-                    <td>
-                      <div className="action-buttons">
-                        <button 
-                          className="edit-btn"
-                          onClick={() => handleEdit(product)}
-                          title="Edit product"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="delete-btn"
-                          onClick={() => handleDeleteClick(product)}
-                          title="Delete product"
-                        >
-                          Delete
-                        </button>
-                      </div>
+              products.map(product => {
+                const profit = calculateProfit(product);
+                const margin = calculateMargin(product);
+                const profitColor = profit >= 0 ? '#38a169' : '#e53e3e';
+                
+                return (
+                  <tr key={product.id}>
+                    <td>#{product.id}</td>
+                    <td className="product-name">{product.name}</td>
+                    <td>{product.category_name || "Uncategorized"}</td>
+                    <td className="price-cell">{formatCurrency(product.price)}</td>
+                    <td className="cost-cell">{formatCurrency(product.cost_price || product.price * 0.7)}</td>
+                    <td className="profit-cell" style={{ color: profitColor, fontWeight: 'bold' }}>
+                      {formatCurrency(profit)}
                     </td>
-                  )}
-                </tr>
-              ))
+                    <td className="margin-cell">
+                      <span className={`margin-badge ${margin >= 30 ? 'high' : margin >= 15 ? 'medium' : 'low'}`}>
+                        {margin.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`stock-badge ${
+                        product.stock_quantity === 0 ? 'out-of-stock' : 
+                        product.stock_quantity < 10 ? 'low-stock' : ''
+                      }`}>
+                        {product.stock_quantity}
+                      </span>
+                    </td>
+                    <td>
+                      {product.stock_quantity === 0 ? (
+                        <span className="status out-of-stock">Out of Stock</span>
+                      ) : product.stock_quantity < 10 ? (
+                        <span className="status low-stock">Low Stock</span>
+                      ) : (
+                        <span className="status in-stock">In Stock</span>
+                      )}
+                    </td>
+                    {auth.user?.role === 'admin' && (
+                      <td>
+                        <div className="action-buttons">
+                          <button 
+                            className="edit-btn"
+                            onClick={() => handleEdit(product)}
+                            title="Edit product"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="delete-btn"
+                            onClick={() => handleDeleteClick(product)}
+                            title="Delete product"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -391,12 +476,18 @@ const Products = ({ auth }) => {
               {products.filter(p => p.stock_quantity === 0).length}
             </strong>
           </div>
+          <div className="summary profit-summary">
+            Avg Margin: <strong>
+              {(products.reduce((sum, p) => sum + calculateMargin(p), 0) / products.length || 0).toFixed(1)}%
+            </strong>
+          </div>
         </div>
       </div>
 
+      {/* Add/Edit Product Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal product-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
               <button 
@@ -419,6 +510,7 @@ const Products = ({ auth }) => {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter product name"
+                  autoFocus
                 />
               </div>
               
@@ -435,7 +527,7 @@ const Products = ({ auth }) => {
               
               <div className="form-row">
                 <div className="form-group">
-                  <label>Price ($) *</label>
+                  <label>Selling Price ($) *</label>
                   <input
                     type="number"
                     name="price"
@@ -449,6 +541,26 @@ const Products = ({ auth }) => {
                 </div>
                 
                 <div className="form-group">
+                  <label>Cost Price ($)</label>
+                  <input
+                    type="number"
+                    name="cost_price"
+                    value={formData.cost_price}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00 (defaults to 70% of selling price)"
+                  />
+                  {!formData.cost_price && formData.price && (
+                    <small className="field-hint">
+                      Default: {formatCurrency(parseFloat(formData.price) * 0.7)}
+                    </small>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
                   <label>Stock Quantity *</label>
                   <input
                     type="number"
@@ -460,23 +572,68 @@ const Products = ({ auth }) => {
                     placeholder="0"
                   />
                 </div>
+                
+                <div className="form-group">
+                  <label>Category</label>
+                  <select
+                    name="category_id"
+                    value={formData.category_id}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select Category (Optional)</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  name="category_id"
-                  value={formData.category_id}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select Category (Optional)</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              {/* Profit Preview */}
+              {formData.price && (
+                <div className="profit-preview">
+                  <h4>Profit Preview</h4>
+                  <div className="preview-grid">
+                    <div>
+                      <span>Selling Price:</span>
+                      <strong>{formatCurrency(parseFloat(formData.price) || 0)}</strong>
+                    </div>
+                    <div>
+                      <span>Cost Price:</span>
+                      <strong>{formatCurrency(
+                        formData.cost_price 
+                          ? parseFloat(formData.cost_price)
+                          : (parseFloat(formData.price) * 0.7)
+                      )}</strong>
+                    </div>
+                    <div>
+                      <span>Profit per Unit:</span>
+                      <strong className="profit-amount">
+                        {formatCurrency(
+                          (parseFloat(formData.price) || 0) - 
+                          (formData.cost_price 
+                            ? parseFloat(formData.cost_price)
+                            : (parseFloat(formData.price) * 0.7)
+                          )
+                        )}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Margin:</span>
+                      <strong className="margin-percent">
+                        {(
+                          ((parseFloat(formData.price) || 0) - 
+                          (formData.cost_price 
+                            ? parseFloat(formData.cost_price)
+                            : (parseFloat(formData.price) * 0.7)
+                          )) / (parseFloat(formData.price) || 1) * 100
+                        ).toFixed(1)}%
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="form-actions">
                 <button 
@@ -498,6 +655,7 @@ const Products = ({ auth }) => {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && productToDelete && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modal delete-confirm-modal" onClick={e => e.stopPropagation()}>
@@ -519,13 +677,16 @@ const Products = ({ auth }) => {
               <div className="product-details">
                 <p><strong>Product ID:</strong> #{productToDelete.id}</p>
                 <p><strong>Category:</strong> {productToDelete.category_name || "Uncategorized"}</p>
-                <p><strong>Price:</strong> ${parseFloat(productToDelete.price).toFixed(2)}</p>
+                <p><strong>Selling Price:</strong> {formatCurrency(productToDelete.price)}</p>
+                <p><strong>Cost Price:</strong> {formatCurrency(productToDelete.cost_price || productToDelete.price * 0.7)}</p>
+                <p><strong>Profit per Unit:</strong> {formatCurrency(productToDelete.price - (productToDelete.cost_price || productToDelete.price * 0.7))}</p>
                 <p><strong>Current Stock:</strong> {productToDelete.stock_quantity} units</p>
+                <p><strong>Total Value:</strong> {formatCurrency(productToDelete.price * productToDelete.stock_quantity)}</p>
               </div>
               
               <p className="warning-text">
                 <strong>Warning:</strong> This action cannot be undone. 
-                {productToDelete.stock_quantity > 0 && " The product will be removed from inventory."}
+                {productToDelete.stock_quantity > 0 && " The product will be removed from inventory and all profit calculations."}
               </p>
             </div>
             

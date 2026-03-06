@@ -12,7 +12,7 @@ const Orders = ({ auth }) => {
   const [selectedUserId, setSelectedUserId] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // This is used in the JSX
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -45,8 +45,8 @@ const Orders = ({ auth }) => {
 
       setOrders(formattedOrders);
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
       setError("Failed to load orders");
       setLoading(false);
     }
@@ -63,8 +63,8 @@ const Orders = ({ auth }) => {
 
       if (error) throw error;
       setUsers(data || []);
-    } catch (error) {
-      console.error("Error fetching users:", error);
+    } catch (err) {
+      console.error("Error fetching users:", err);
     }
   }, [auth.user?.role]);
 
@@ -170,8 +170,8 @@ const Orders = ({ auth }) => {
       });
       
       setShowOrderDetails(true);
-    } catch (error) {
-      console.error("Error fetching order details:", error);
+    } catch (err) {
+      console.error("Error fetching order details:", err);
       setError("Failed to load order details");
     }
   };
@@ -234,6 +234,13 @@ const Orders = ({ auth }) => {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+          <button onClick={() => setError("")}>×</button>
+        </div>
+      )}
 
       <div className="orders-filters">
         {auth.user?.role === 'admin' && (
