@@ -101,27 +101,13 @@ const Login = ({ setAuth }) => {
         </div>
 
         {success && (
-          <div className="success-message" style={{
-            backgroundColor: "#d4edda",
-            color: "#155724",
-            padding: "0.75rem 1rem",
-            borderRadius: "6px",
-            marginBottom: "1rem",
-            fontSize: "0.9rem"
-          }}>
+          <div className="success-message">
             {success}
           </div>
         )}
 
         {error && (
-          <div className="error-message" style={{
-            backgroundColor: "#f8d7da",
-            color: "#721c24",
-            padding: "0.75rem 1rem",
-            borderRadius: "6px",
-            marginBottom: "1rem",
-            fontSize: "0.9rem"
-          }}>
+          <div className="error-message">
             {error}
           </div>
         )}
