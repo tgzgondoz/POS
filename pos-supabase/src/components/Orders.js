@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./Orders.css";
 
 const Orders = ({ auth }) => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -213,6 +215,13 @@ const Orders = ({ auth }) => {
 
   return (
     <div className="orders-container">
+      {/* Back Button Section */}
+      <div className="back-section">
+        <button onClick={() => navigate(-1)} className="back-button">
+          ← Back
+        </button>
+      </div>
+
       <div className="orders-header">
         <h1>Orders History</h1>
         <div className="orders-stats">

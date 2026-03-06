@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { productsApi, categoriesApi } from "../lib/api";
 import "./Inventory.css";
 
 const Inventory = ({ auth }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -161,6 +163,13 @@ const Inventory = ({ auth }) => {
 
   return (
     <div className="inventory-container">
+      {/* Back Button Section */}
+      <div className="back-section">
+        <button onClick={() => navigate(-1)} className="back-button">
+          ← Back
+        </button>
+      </div>
+
       <div className="inventory-header">
         <h1>Inventory Management</h1>
         <div className="header-actions">

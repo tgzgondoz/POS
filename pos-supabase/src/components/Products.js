@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./Products.css";
 
 const Products = ({ auth }) => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -300,6 +302,13 @@ const Products = ({ auth }) => {
 
   return (
     <div className="products-container">
+      {/* Back Button Section */}
+      <div className="back-section">
+        <button onClick={() => navigate(-1)} className="back-button">
+          ← Back
+        </button>
+      </div>
+
       <div className="products-header">
         <h1>Products Management</h1>
         <div className="header-right">

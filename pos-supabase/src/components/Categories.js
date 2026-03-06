@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./Categories.css";
 
 const Categories = ({ auth }) => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -211,6 +213,13 @@ const Categories = ({ auth }) => {
 
   return (
     <div className="categories-container">
+      {/* Back Button Section */}
+      <div className="back-section">
+        <button onClick={() => navigate(-1)} className="back-button">
+          ← Back
+        </button>
+      </div>
+
       <div className="categories-header">
         <h1>Product Categories</h1>
         <div className="header-actions">
