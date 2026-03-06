@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// Remove unused useNavigate
 import { supabase } from "../lib/supabase";
 import "./POS.css";
 
@@ -18,12 +17,6 @@ const POS = ({ auth }) => {
   const [discountType, setDiscountType] = useState("percentage");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  // Remove unused state variables
-  // const [selectedProduct, setSelectedProduct] = useState(null);
-  // const [showProductModal, setShowProductModal] = useState(false);
-  
-  // Remove unused navigate
-  // const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -318,7 +311,7 @@ const POS = ({ auth }) => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory === "all" || String(product.category_id) === String(selectedCategory); // Fixed: Use strict equality with type conversion
+    const matchesCategory = selectedCategory === "all" || String(product.category_id) === String(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 

@@ -8,6 +8,8 @@ import Products from './components/Products';
 import Inventory from './components/Inventory';
 import Orders from './components/Orders';
 import Users from './components/Users';
+import Categories from './components/Categories';
+import Reports from './components/Reports';
 import './App.css';
 
 function App() {
@@ -90,6 +92,22 @@ function App() {
               auth.isAuthenticated ? 
               <Users auth={auth} /> : 
               <Navigate to="/login" />
+            } 
+          />
+          <Route 
+            path="/categories" 
+            element={
+              auth.isAuthenticated ? 
+              <Categories auth={auth} /> : 
+              <Navigate to="/login" />
+            } 
+          />
+          <Route 
+            path="/reports" 
+            element={
+              auth.isAuthenticated && auth.user?.role === 'admin' ? 
+              <Reports auth={auth} /> : 
+              <Navigate to="/dashboard" />
             } 
           />
           <Route 

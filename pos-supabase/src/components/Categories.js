@@ -8,33 +8,29 @@ const Categories = ({ auth }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
-    description: ""
+    name: ""
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [stats, setStats] = useState({});
 
   useEffect(() => {
-    console.log("Auth in Categories:", auth); // Debug auth
+    console.log("Auth in Categories:", auth);
     fetchCategories();
-  }, []);
+  }, [auth]);
 
   const fetchCategories = async () => {
-    console.log("Fetching categories..."); // Debug fetch
+    console.log("Fetching categories...");
     try {
       setLoading(true);
-      setError(""); // Clear any previous errors
+      setError("");
       
-      // First, check if we can connect to Supabase
       console.log("Supabase URL:", process.env.REACT_APP_SUPABASE_URL);
       
-      // Test connection with a simple query first
-      const { data: testData, error: testError } = await supabase
+      // Test connection first
+      const { error: testError } = await supabase
         .from('categories')
         .select('count', { count: 'exact', head: true });
-      
-      console.log("Test query result:", { testData, testError });
       
       if (testError) {
         console.error("Test query failed:", testError);
@@ -48,14 +44,13 @@ const Categories = ({ auth }) => {
         .select('*')
         .order('name');
 
-      console.log("Categories data received:", categoriesData); // Debug categories data
+      console.log("Categories data received:", categoriesData);
       
       if (categoriesError) {
         console.error("Categories fetch error:", categoriesError);
         throw categoriesError;
       }
 
-      // If no categories, set empty array and continue
       setCategories(categoriesData || []);
 
       // Fetch products for stats
@@ -64,12 +59,8 @@ const Categories = ({ auth }) => {
         .from('products')
         .select('category_id, price, stock_quantity, cost_price');
 
-      console.log("Products data received:", productsData); // Debug products data
-      
       if (productsError) {
         console.error("Products fetch error:", productsError);
-        // Don't throw here, just log error and continue with empty stats
-        console.warn("Could not fetch products for stats");
       }
 
       // Calculate stats for each category
@@ -93,7 +84,7 @@ const Categories = ({ auth }) => {
         });
       }
 
-      console.log("Category stats calculated:", categoryStats); // Debug stats
+      console.log("Category stats calculated:", categoryStats);
       setStats(categoryStats);
       
     } catch (error) {
@@ -130,7 +121,6 @@ const Categories = ({ auth }) => {
           .from('categories')
           .update({
             name: formData.name.trim(),
-            description: formData.description.trim() || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingCategory.id);
@@ -142,9 +132,7 @@ const Categories = ({ auth }) => {
         const { error } = await supabase
           .from('categories')
           .insert([{
-            name: formData.name.trim(),
-            description: formData.description.trim() || null,
-            created_at: new Date().toISOString()
+            name: formData.name.trim()
           }]);
 
         if (error) throw error;
@@ -153,7 +141,7 @@ const Categories = ({ auth }) => {
 
       setShowModal(false);
       setEditingCategory(null);
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "" });
       fetchCategories();
       
       setTimeout(() => setSuccess(""), 3000);
@@ -170,8 +158,7 @@ const Categories = ({ auth }) => {
   const handleEdit = (category) => {
     setEditingCategory(category);
     setFormData({
-      name: category.name,
-      description: category.description || ""
+      name: category.name
     });
     setShowModal(true);
   };
@@ -222,32 +209,6 @@ const Categories = ({ auth }) => {
     );
   }
 
-  // Show error state if there's an error
-  if (error) {
-    return (
-      <div className="categories-container">
-        <div className="error-message" style={{ padding: '2rem', textAlign: 'center' }}>
-          <h3 style={{ color: '#e53e3e', marginBottom: '1rem' }}>Error Loading Categories</h3>
-          <p>{error}</p>
-          <button 
-            onClick={() => fetchCategories()}
-            style={{
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              background: '#4299e1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="categories-container">
       <div className="categories-header">
@@ -264,7 +225,7 @@ const Categories = ({ auth }) => {
               className="add-category-btn"
               onClick={() => {
                 setEditingCategory(null);
-                setFormData({ name: "", description: "" });
+                setFormData({ name: "" });
                 setShowModal(true);
               }}
             >
@@ -274,6 +235,13 @@ const Categories = ({ auth }) => {
         </div>
       </div>
 
+      {error && (
+        <div className="error-message">
+          {error}
+          <button onClick={() => setError("")} className="clear-message-btn">×</button>
+        </div>
+      )}
+
       {/* Show message if no categories */}
       {categories.length === 0 ? (
         <div className="no-data" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -282,7 +250,7 @@ const Categories = ({ auth }) => {
             <button 
               onClick={() => {
                 setEditingCategory(null);
-                setFormData({ name: "", description: "" });
+                setFormData({ name: "" });
                 setShowModal(true);
               }}
               style={{
@@ -351,10 +319,6 @@ const Categories = ({ auth }) => {
                     </div>
                   )}
                 </div>
-                
-                {category.description && (
-                  <p className="category-description">{category.description}</p>
-                )}
 
                 <div className="category-stats">
                   <div className="stat-item">
@@ -418,17 +382,6 @@ const Categories = ({ auth }) => {
                   required
                   placeholder="e.g., Electronics, Clothing, etc."
                   autoFocus
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                  placeholder="Enter category description (optional)"
                 />
               </div>
               

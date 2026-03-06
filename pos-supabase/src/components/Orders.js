@@ -12,7 +12,7 @@ const Orders = ({ auth }) => {
   const [selectedUserId, setSelectedUserId] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [error, setError] = useState(""); // This is used in the JSX
+  const [error, setError] = useState("");
 
   const fetchOrders = useCallback(async () => {
     try {

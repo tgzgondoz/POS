@@ -135,7 +135,7 @@ const Inventory = ({ auth }) => {
                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCategory = filterCategory === "all" || 
-                           String(product.category_id) === String(filterCategory); // Fixed: Use strict equality with type conversion
+                           String(product.category_id) === String(filterCategory);
     
     const matchesStock = filterStock === "all" ||
                         (filterStock === "out" && product.stock_quantity === 0) ||

@@ -56,7 +56,9 @@ const Dashboard = ({ auth, setAuth }) => {
           )
         `);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error("Error fetching order items:", itemsError);
+      }
 
       // Calculate statistics with profit
       const lowStockCount = products.filter(p => p.stock_quantity < 10).length;
@@ -67,7 +69,7 @@ const Dashboard = ({ auth, setAuth }) => {
       
       // Calculate today's profit
       const todayOrderIds = todayOrders.map(o => o.id);
-      const todayItems = orderItems.filter(item => todayOrderIds.includes(item.order_id));
+      const todayItems = (orderItems || []).filter(item => todayOrderIds.includes(item.order_id));
       const todayProfit = todayItems.reduce((sum, item) => {
         const costPrice = item.products?.cost_price || item.price * 0.7;
         const profit = (item.price - costPrice) * item.quantity;
@@ -83,7 +85,7 @@ const Dashboard = ({ auth, setAuth }) => {
       
       const filteredOrders = orders.filter(o => new Date(o.created_at) >= startDate);
       const filteredOrderIds = filteredOrders.map(o => o.id);
-      const filteredItems = orderItems.filter(item => filteredOrderIds.includes(item.order_id));
+      const filteredItems = (orderItems || []).filter(item => filteredOrderIds.includes(item.order_id));
       
       const monthlySales = filteredOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
       
@@ -96,7 +98,7 @@ const Dashboard = ({ auth, setAuth }) => {
 
       // Total revenue and profit (all time)
       const totalRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
-      const totalProfit = orderItems.reduce((sum, item) => {
+      const totalProfit = (orderItems || []).reduce((sum, item) => {
         const costPrice = item.products?.cost_price || item.price * 0.7;
         const profit = (item.price - costPrice) * item.quantity;
         return sum + profit;
@@ -107,7 +109,7 @@ const Dashboard = ({ auth, setAuth }) => {
 
       // Calculate top products by profit
       const productProfitMap = new Map();
-      orderItems.forEach(item => {
+      (orderItems || []).forEach(item => {
         const productId = item.product_id;
         const productName = item.products?.name || 'Unknown';
         const costPrice = item.products?.cost_price || item.price * 0.7;
@@ -171,11 +173,11 @@ const Dashboard = ({ auth, setAuth }) => {
     } finally {
       setLoading(false);
     }
-  }, [dateRange]); // Add dateRange as dependency
+  }, [dateRange]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]); // Now includes fetchDashboardData in dependencies
+  }, [fetchDashboardData]);
 
   const handleLogout = async () => {
     try {
@@ -236,13 +238,6 @@ const Dashboard = ({ auth, setAuth }) => {
           title: "Orders",
           description: "View history & profits",
           icon: "🛒",
-          primary: false
-        },
-        {
-          to: "/reports",
-          title: "Reports",
-          description: "Profit & sales analysis",
-          icon: "📈",
           primary: false
         },
         {
@@ -326,6 +321,7 @@ const Dashboard = ({ auth, setAuth }) => {
       {error && (
         <div className="error-message" style={{ marginBottom: '1rem' }}>
           {error}
+          <button onClick={() => setError("")}>×</button>
         </div>
       )}
 
@@ -420,7 +416,7 @@ const Dashboard = ({ auth, setAuth }) => {
             <div className="profit-leaders-grid">
               {profitLeaders.length > 0 ? (
                 profitLeaders.map((product, index) => (
-                  <div key={product.id} className="profit-leader-card">
+                  <div key={product.id || index} className="profit-leader-card">
                     <div className="leader-rank">#{index + 1}</div>
                     <div className="leader-info">
                       <h4>{product.name}</h4>
