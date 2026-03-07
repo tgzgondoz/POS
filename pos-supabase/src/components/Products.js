@@ -15,7 +15,7 @@ const Products = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
-    name: "",
+    name_part: "", // Combined field for name and part number
     description: "",
     price: "",
     cost_price: "",
@@ -85,13 +85,33 @@ const Products = ({ auth }) => {
     }));
   };
 
+  // Parse combined name/part field
+  const parseNamePart = (combinedValue) => {
+    const trimmed = combinedValue.trim();
+    
+    // Check if there's a slash to separate name and part number
+    const slashIndex = trimmed.indexOf('/');
+    
+    if (slashIndex > -1) {
+      const name = trimmed.substring(0, slashIndex).trim();
+      const partNumber = trimmed.substring(slashIndex + 1).trim();
+      return { name, partNumber };
+    }
+    
+    // If no slash, treat the whole thing as name, part number is empty
+    return { name: trimmed, partNumber: '' };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     
+    // Parse the combined field
+    const { name, partNumber } = parseNamePart(formData.name_part);
+    
     // Validation
-    if (!formData.name.trim()) {
+    if (!name) {
       setError("Product name is required");
       return;
     }
@@ -113,7 +133,8 @@ const Products = ({ auth }) => {
     
     try {
       const productData = {
-        name: formData.name.trim(),
+        name: name,
+        part_number: partNumber || null,
         description: formData.description.trim() || null,
         price: parseFloat(formData.price),
         cost_price: costPrice,
@@ -172,7 +193,7 @@ const Products = ({ auth }) => {
       setShowModal(false);
       setEditingProduct(null);
       setFormData({
-        name: "",
+        name_part: "",
         description: "",
         price: "",
         cost_price: "",
@@ -202,8 +223,13 @@ const Products = ({ auth }) => {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
+    // Combine name and part number for editing
+    const combinedNamePart = product.part_number 
+      ? `${product.name} / ${product.part_number}`
+      : product.name;
+      
     setFormData({
-      name: product.name || "",
+      name_part: combinedNamePart,
       description: product.description || "",
       price: product.price?.toString() || "",
       cost_price: product.cost_price?.toString() || "",
@@ -324,7 +350,7 @@ const Products = ({ auth }) => {
               onClick={() => {
                 setEditingProduct(null);
                 setFormData({
-                  name: "",
+                  name_part: "",
                   description: "",
                   price: "",
                   cost_price: "",
@@ -388,7 +414,7 @@ const Products = ({ auth }) => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Name</th>
+              <th>Product Name / Part Number</th>
               <th>Category</th>
               <th>Selling Price</th>
               <th>Cost Price</th>
@@ -415,7 +441,14 @@ const Products = ({ auth }) => {
                 return (
                   <tr key={product.id}>
                     <td>#{product.id}</td>
-                    <td className="product-name">{product.name}</td>
+                    <td>
+                      <div className="product-name-container">
+                        <span className="product-name">{product.name}</span>
+                        {product.part_number && (
+                          <span className="product-part-number">{product.part_number}</span>
+                        )}
+                      </div>
+                    </td>
                     <td>{product.category_name || "Uncategorized"}</td>
                     <td className="price-cell">{formatCurrency(product.price)}</td>
                     <td className="cost-cell">{formatCurrency(product.cost_price || product.price * 0.7)}</td>
@@ -510,17 +543,21 @@ const Products = ({ auth }) => {
             <form onSubmit={handleSubmit} className="product-form">
               {error && <div className="form-error">{error}</div>}
               
+              {/* Combined Product Name / Part Number Field */}
               <div className="form-group">
-                <label>Product Name *</label>
+                <label>Product Name / Part Number *</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="name_part"
+                  value={formData.name_part}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter product name"
+                  placeholder="Enter product name (use / to separate part number) e.g., Product Name / PART-123"
                   autoFocus
                 />
+                <small className="field-hint">
+                  Add part number after a slash (/) - Example: "Wireless Mouse / WM-001"
+                </small>
               </div>
               
               <div className="form-group">
@@ -598,6 +635,23 @@ const Products = ({ auth }) => {
                   </select>
                 </div>
               </div>
+
+              {/* Preview of parsed values */}
+              {formData.name_part && (
+                <div className="preview-section">
+                  <h4>Parsed Values Preview</h4>
+                  <div className="preview-grid">
+                    <div>
+                      <span>Product Name:</span>
+                      <strong>{parseNamePart(formData.name_part).name || "—"}</strong>
+                    </div>
+                    <div>
+                      <span>Part Number:</span>
+                      <strong>{parseNamePart(formData.name_part).partNumber || "—"}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Profit Preview */}
               {formData.price && (
@@ -685,6 +739,7 @@ const Products = ({ auth }) => {
               
               <div className="product-details">
                 <p><strong>Product ID:</strong> #{productToDelete.id}</p>
+                <p><strong>Part Number:</strong> {productToDelete.part_number || "—"}</p>
                 <p><strong>Category:</strong> {productToDelete.category_name || "Uncategorized"}</p>
                 <p><strong>Selling Price:</strong> {formatCurrency(productToDelete.price)}</p>
                 <p><strong>Cost Price:</strong> {formatCurrency(productToDelete.cost_price || productToDelete.price * 0.7)}</p>
