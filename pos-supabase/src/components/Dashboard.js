@@ -1177,76 +1177,7 @@ const Dashboard = ({ auth, setAuth }) => {
 
           <div className="bottom-content-row">
             {/* Recent Orders */}
-            <div className="recent-orders">
-              <div className="section-header">
-                <h2>Recent Orders</h2>
-                <button
-                  onClick={() => {
-                    setShowReports(true);
-                    setReportType("sales");
-                    generateReport();
-                  }}
-                  className="view-all"
-                >
-                  View All →
-                </button>
-              </div>
-              <div className="orders-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Customer</th>
-                      <th>Amount</th>
-                      <th>Profit</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.length > 0 ? (
-                      recentOrders.map((order) => (
-                        <tr key={order.id}>
-                          <td>#{order.id}</td>
-                          <td>{order.user_name || "Walk-in Customer"}</td>
-                          <td className="amount">
-                            {formatCurrency(
-                              parseFloat(order.total_amount || 0),
-                            )}
-                          </td>
-                          <td className="profit-amount">
-                            {formatCurrency(
-                              order.profit || order.total_amount * 0.3,
-                            )}
-                          </td>
-                          <td>
-                            {order.created_at
-                              ? new Date(order.created_at).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )
-                              : "N/A"}
-                          </td>
-                          <td>
-                            <span className="status completed">Completed</span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="6" className="no-data">
-                          No orders yet. Start selling!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+           
             {/* Top Products by Value */}
             <div className="top-products">
               <div className="section-header">

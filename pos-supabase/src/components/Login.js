@@ -93,6 +93,26 @@ const Login = ({ setAuth }) => {
     }
   };
 
+  // Show loading state with logo
+  if (loading) {
+    return (
+      <div className="login-container">
+        <div className="loading-state">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <p className="loading-text">Signing in...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="login-container">
       <div className="login-card">
@@ -155,7 +175,7 @@ const Login = ({ setAuth }) => {
             className="login-button" 
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign In"}
+            Sign In
           </button>
         </form>
 
