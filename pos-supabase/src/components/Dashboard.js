@@ -35,6 +35,11 @@ const Dashboard = ({ auth, setAuth }) => {
   const [reportLoading, setReportLoading] = useState(false);
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  
+  // Pagination state for reports table
+  const [reportCurrentPage, setReportCurrentPage] = useState(1);
+  const [reportItemsPerPage, setReportItemsPerPage] = useState(10);
+  const [paginatedReportData, setPaginatedReportData] = useState([]);
 
   const navigate = useNavigate();
 
@@ -207,6 +212,18 @@ const Dashboard = ({ auth, setAuth }) => {
       setLoading(false);
     }
   }, [dateRange]);
+
+  // Update paginated report data
+  useEffect(() => {
+    const indexOfLastItem = reportCurrentPage * reportItemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - reportItemsPerPage;
+    setPaginatedReportData(reportData.slice(indexOfFirstItem, indexOfLastItem));
+  }, [reportData, reportCurrentPage, reportItemsPerPage]);
+
+  // Reset to first page when report data or items per page changes
+  useEffect(() => {
+    setReportCurrentPage(1);
+  }, [reportData, reportItemsPerPage]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -581,6 +598,25 @@ const Dashboard = ({ auth, setAuth }) => {
     window.URL.revokeObjectURL(url);
   };
 
+  // Pagination handlers for reports
+  const handleReportItemsPerPageChange = (e) => {
+    setReportItemsPerPage(Number(e.target.value));
+  };
+
+  const handleReportPageChange = (pageNumber) => {
+    setReportCurrentPage(pageNumber);
+  };
+
+  const handleReportPreviousPage = () => {
+    setReportCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleReportNextPage = () => {
+    setReportCurrentPage(prev => Math.min(prev + 1, Math.ceil(reportData.length / reportItemsPerPage)));
+  };
+
+  const reportTotalPages = Math.ceil(reportData.length / reportItemsPerPage);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -605,8 +641,6 @@ const Dashboard = ({ auth, setAuth }) => {
       {
         to: "/pos",
         title: "New Sale",
-       
-
         primary: true,
       },
     ];
@@ -617,36 +651,26 @@ const Dashboard = ({ auth, setAuth }) => {
         {
           to: "/products",
           title: "Products",
-  
-
           primary: false,
         },
         {
           to: "/categories",
           title: "Categories",
-         
-
           primary: false,
         },
         {
           to: "/inventory",
           title: "Inventory",
-          
-
           primary: false,
         },
         {
           to: "/orders",
           title: "Orders",
-          
-
           primary: false,
         },
         {
           to: "/users",
           title: "Users",
-         
-
           primary: false,
         },
       ];
@@ -656,7 +680,6 @@ const Dashboard = ({ auth, setAuth }) => {
         {
           to: "/orders",
           title: "Orders",
-          
           primary: false,
         },
       ];
@@ -820,7 +843,6 @@ const Dashboard = ({ auth, setAuth }) => {
               <div className="action-icon">{action.icon}</div>
               <div className="action-content">
                 <h3>{action.title}</h3>
-                <p>{action.description}</p>
               </div>
             </Link>
           ))}
@@ -838,7 +860,6 @@ const Dashboard = ({ auth, setAuth }) => {
             >
               <div className="action-content">
                 <h3>{showReports ? "Hide Reports" : "Show Reports"}</h3>
-               
               </div>
             </button>
           )}
@@ -950,6 +971,30 @@ const Dashboard = ({ auth, setAuth }) => {
             </div>
           )}
 
+          {/* Pagination Controls for Report Table */}
+          {reportData.length > 0 && (
+            <div className="pagination-controls">
+              <div className="items-per-page">
+                <label htmlFor="report-items-per-page">Show:</label>
+                <select 
+                  id="report-items-per-page" 
+                  value={reportItemsPerPage} 
+                  onChange={handleReportItemsPerPageChange}
+                  className="items-per-page-select"
+                  disabled={reportLoading}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <span>entries</span>
+              </div>
+              <div className="pagination-info">
+                Showing {reportData.length > 0 ? (reportCurrentPage - 1) * reportItemsPerPage + 1 : 0} to {Math.min(reportCurrentPage * reportItemsPerPage, reportData.length)} of {reportData.length} entries
+              </div>
+            </div>
+          )}
+
           {/* Report Data Table */}
           {reportLoading ? (
             <div className="report-loading">
@@ -957,77 +1002,109 @@ const Dashboard = ({ auth, setAuth }) => {
               <p>Generating report...</p>
             </div>
           ) : reportData.length > 0 ? (
-            <div className="report-table-container">
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    {Object.keys(reportData[0])
-                      .filter(
-                        (key) =>
-                          !["id", "users", "products", "categories"].includes(
-                            key,
-                          ),
-                      )
-                      .map((key) => (
-                        <th key={key}>
-                          {key
-                            .replace(/([A-Z])/g, " $1")
-                            .replace(/^./, (str) => str.toUpperCase())}
-                        </th>
-                      ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.map((row, index) => (
-                    <tr key={index}>
-                      {Object.entries(row)
+            <>
+              <div className="report-table-container">
+                <table className="report-table">
+                  <thead>
+                    <tr>
+                      {Object.keys(reportData[0])
                         .filter(
-                          ([key]) =>
+                          (key) =>
                             !["id", "users", "products", "categories"].includes(
                               key,
                             ),
                         )
-                        .map(([key, value], i) => {
-                          let displayValue = value;
-                          if (typeof value === "number") {
-                            if (
-                              key.includes("price") ||
-                              key.includes("amount") ||
-                              key.includes("revenue") ||
-                              key.includes("profit") ||
-                              key.includes("value") ||
-                              key.includes("cost")
-                            ) {
-                              displayValue = formatCurrency(value);
-                            } else if (
-                              key.includes("margin") ||
-                              key.includes("percent")
-                            ) {
-                              displayValue = formatPercent(value);
-                            } else {
-                              displayValue = formatNumber(value);
-                            }
-                          }
-
-                          let cellClass = "";
-                          if (
-                            key.includes("profit") ||
-                            key.includes("margin")
-                          ) {
-                            cellClass = value >= 0 ? "positive" : "negative";
-                          }
-
-                          return (
-                            <td key={i} className={cellClass}>
-                              {displayValue?.toString() || "-"}
-                            </td>
-                          );
-                        })}
+                        .map((key) => (
+                          <th key={key}>
+                            {key
+                              .replace(/([A-Z])/g, " $1")
+                              .replace(/^./, (str) => str.toUpperCase())}
+                          </th>
+                        ))}
                     </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedReportData.map((row, index) => (
+                      <tr key={index}>
+                        {Object.entries(row)
+                          .filter(
+                            ([key]) =>
+                              !["id", "users", "products", "categories"].includes(
+                                key,
+                              ),
+                          )
+                          .map(([key, value], i) => {
+                            let displayValue = value;
+                            if (typeof value === "number") {
+                              if (
+                                key.includes("price") ||
+                                key.includes("amount") ||
+                                key.includes("revenue") ||
+                                key.includes("profit") ||
+                                key.includes("value") ||
+                                key.includes("cost")
+                              ) {
+                                displayValue = formatCurrency(value);
+                              } else if (
+                                key.includes("margin") ||
+                                key.includes("percent")
+                              ) {
+                                displayValue = formatPercent(value);
+                              } else {
+                                displayValue = formatNumber(value);
+                              }
+                            }
+
+                            let cellClass = "";
+                            if (
+                              key.includes("profit") ||
+                              key.includes("margin")
+                            ) {
+                              cellClass = value >= 0 ? "positive" : "negative";
+                            }
+
+                            return (
+                              <td key={i} className={cellClass}>
+                                {displayValue?.toString() || "-"}
+                              </td>
+                            );
+                          })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {reportData.length > 0 && (
+                <div className="pagination">
+                  <button 
+                    onClick={handleReportPreviousPage} 
+                    disabled={reportCurrentPage === 1 || reportLoading}
+                    className="pagination-btn"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: reportTotalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => handleReportPageChange(page)}
+                      className={`pagination-btn ${reportCurrentPage === page ? 'active' : ''}`}
+                      disabled={reportLoading}
+                    >
+                      {page}
+                    </button>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                  <button 
+                    onClick={handleReportNextPage} 
+                    disabled={reportCurrentPage === reportTotalPages || reportLoading}
+                    className="pagination-btn"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="no-data">
               <p>

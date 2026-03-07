@@ -13,6 +13,12 @@ const Users = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [lastRequestTime, setLastRequestTime] = useState(0);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedUsers, setPaginatedUsers] = useState([]);
+  
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -46,6 +52,18 @@ const Users = ({ auth }) => {
       setLoading(false);
     }
   }, []);
+
+  // Update paginated users when users, currentPage, or itemsPerPage changes
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    setPaginatedUsers(users.slice(indexOfFirstItem, indexOfLastItem));
+  }, [users, currentPage, itemsPerPage]);
+
+  // Reset to first page when items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   useEffect(() => {
     if (auth.user?.role === 'admin') {
@@ -387,6 +405,25 @@ const Users = ({ auth }) => {
     }
   };
 
+  // Pagination functions
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(users.length / itemsPerPage)));
+  };
+
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+
   if (auth.user?.role !== 'admin') {
     return (
       <div className="access-denied">
@@ -481,6 +518,27 @@ const Users = ({ auth }) => {
         </div>
       )}
 
+      {/* Pagination Controls */}
+      <div className="pagination-controls">
+        <div className="items-per-page">
+          <label htmlFor="items-per-page">Show:</label>
+          <select 
+            id="items-per-page" 
+            value={itemsPerPage} 
+            onChange={handleItemsPerPageChange}
+            className="items-per-page-select"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span>entries</span>
+        </div>
+        <div className="pagination-info">
+          Showing {users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, users.length)} of {users.length} users
+        </div>
+      </div>
+
       <div className="users-table-container">
         <table className="users-table">
           <thead>
@@ -494,14 +552,14 @@ const Users = ({ auth }) => {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {paginatedUsers.length === 0 ? (
               <tr>
                 <td colSpan="6" className="no-data">
                   No users found. Add your first user!
                 </td>
               </tr>
             ) : (
-              users.map(user => (
+              paginatedUsers.map(user => (
                 <tr key={user.id}>
                   <td className="user-id">#{user.id.slice(0, 8)}...</td>
                   <td>{user.username}</td>
@@ -541,6 +599,35 @@ const Users = ({ auth }) => {
           </tbody>
         </table>
         
+        {/* Pagination */}
+        {users.length > 0 && (
+          <div className="pagination">
+            <button 
+              onClick={handlePreviousPage} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={handleNextPage} 
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
         <div className="table-footer">
           <div className="summary">
             Total Users: <strong>{users.length}</strong>
