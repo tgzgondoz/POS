@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./Login.css";
 
 const Login = ({ setAuth }) => {
@@ -96,8 +97,19 @@ const Login = ({ setAuth }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h2>POS System</h2>
-          <p>Sign in to your account</p>
+          {/* Nitrogo Logo - Using import */}
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h2>NITROGO</h2>
+          <p>AUTO SPARE PARTS</p>
+          <span className="login-subtitle">Sign in to your account</span>
         </div>
 
         {success && (
@@ -147,6 +159,11 @@ const Login = ({ setAuth }) => {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        {/* Demo credentials section */}
+        <div className="demo-credentials">
+          <p>Power by oneGondo +263 78 3242 506</p>
+        </div>
       </div>
     </div>
   );

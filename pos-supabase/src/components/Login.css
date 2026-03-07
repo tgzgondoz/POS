@@ -1,4 +1,28 @@
-/* Login.css - Professional Login Page */
+/* Login.css - Professional Login Page with Nitrogo Auto Spare Parts Theme */
+
+/* Color Variables - Professional Auto Parts Theme */
+:root {
+  --primary: #1a365d;      /* Deep automotive blue - trust, reliability */
+  --primary-dark: #0f2542; /* Darker blue for hover states */
+  --primary-light: #2c4c7c; /* Lighter blue for accents */
+  --secondary: #e53e3e;    /* Automotive red - energy, urgency (like brake lights) */
+  --accent: #38a169;       /* Green - success, eco-friendly parts */
+  --text-primary: #1f2937; /* Dark gray for main text */
+  --text-secondary: #4b5563; /* Medium gray for secondary text */
+  --text-muted: #6b7280;   /* Light gray for placeholder text */
+  --bg-primary: #f3f4f6;   /* Light gray background */
+  --bg-card: #ffffff;      /* White card background */
+  --border-light: #e5e7eb; /* Light gray borders */
+  --border-focus: #1a365d; /* Focus border using primary color */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 20px 30px rgba(26, 54, 93, 0.1);
+  --success-bg: #d4edda;   /* Light green background for success */
+  --success-text: #155724; /* Dark green text for success */
+  --error-bg: #f8d7da;     /* Light red background for errors */
+  --error-text: #721c24;   /* Dark red text for errors */
+}
 
 /* Container */
 .login-container {
@@ -7,7 +31,7 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background: #f8fafc;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, #e9ecef 100%);
   padding: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
@@ -21,60 +45,98 @@
 
 /* Login Card */
 .login-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: clamp(24px, 5vw, 40px);
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  border: 1px solid #e2e8f0;
-  transition: transform 0.2s ease;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Header */
+/* Add subtle auto parts pattern/gradient */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+}
+
+.login-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Header with Nitrogo branding */
 .login-header {
   text-align: center;
   margin-bottom: clamp(24px, 4vh, 32px);
 }
 
+.login-header .logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 16px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  object-fit: contain;
+}
+
 .login-header h2 {
-  color: #0f172a;
+  color: var(--primary);
   font-size: clamp(24px, 5vw, 28px);
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 .login-header p {
-  color: #475569;
+  color: var(--secondary);
   font-size: clamp(14px, 2vw, 15px);
+  font-weight: 500;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
   font-weight: 400;
+  display: block;
 }
 
 /* Success Message */
 .success-message {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--success-bg);
+  color: var(--success-text);
   padding: 14px 16px;
   border-radius: 10px;
   margin-bottom: 24px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #a7f3d0;
+  border: 1px solid #c3e6cb;
   text-align: center;
 }
 
 /* Error Message */
 .error-message {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--error-bg);
+  color: var(--error-text);
   padding: 14px 16px;
   border-radius: 10px;
   margin-bottom: 24px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #fecaca;
+  border: 1px solid #f5c6cb;
   text-align: center;
 }
 
@@ -86,7 +148,7 @@
 .form-group label {
   display: block;
   margin-bottom: 6px;
-  color: #1e293b;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
   letter-spacing: -0.01em;
@@ -95,34 +157,35 @@
 .form-group input {
   width: 100%;
   padding: 14px 16px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border-light);
   border-radius: 12px;
   font-size: 15px;
   transition: all 0.2s ease;
   background: white;
   box-sizing: border-box;
+  color: var(--text-primary);
 }
 
 .form-group input:hover {
-  border-color: #94a3b8;
+  border-color: var(--primary-light);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(26, 54, 93, 0.1);
 }
 
 .form-group input::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 400;
 }
 
 .form-group input:disabled {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #64748b;
+  background: var(--bg-primary);
+  border-color: var(--border-light);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -130,7 +193,7 @@
 .login-button {
   width: 100%;
   padding: 14px 20px;
-  background: #3b82f6;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 12px;
@@ -140,12 +203,14 @@
   transition: all 0.2s ease;
   margin-top: 12px;
   letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
 }
 
 .login-button:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 8px 15px -3px rgba(26, 54, 93, 0.2);
 }
 
 .login-button:active:not(:disabled) {
@@ -153,16 +218,28 @@
 }
 
 .login-button:disabled {
-  background: #94a3b8;
+  background: var(--text-muted);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
   opacity: 0.7;
 }
 
-/* Responsive Design */
+/* Demo Credentials */
+.demo-credentials {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+}
 
-/* Desktop Large */
+.demo-credentials p {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Responsive Design */
 @media (min-width: 1440px) {
   .login-card {
     max-width: 440px;
@@ -177,6 +254,10 @@
     font-size: 16px;
   }
   
+  .login-header .logo {
+    width: 200px;
+  }
+  
   .form-group input {
     padding: 16px 18px;
     font-size: 16px;
@@ -188,7 +269,6 @@
   }
 }
 
-/* Desktop */
 @media (min-width: 1024px) and (max-width: 1439px) {
   .login-card {
     max-width: 420px;
@@ -196,7 +276,6 @@
   }
 }
 
-/* Tablet */
 @media (max-width: 768px) {
   .login-container {
     padding: 20px;
@@ -212,6 +291,10 @@
     font-size: 26px;
   }
   
+  .login-header .logo {
+    width: 160px;
+  }
+  
   .form-group input {
     padding: 12px 16px;
   }
@@ -221,7 +304,6 @@
   }
 }
 
-/* Mobile */
 @media (max-width: 480px) {
   .login-container {
     padding: 16px;
@@ -244,6 +326,11 @@
   
   .login-header p {
     font-size: 14px;
+  }
+  
+  .login-header .logo {
+    width: 140px;
+    margin-bottom: 12px;
   }
   
   .form-group {
@@ -277,7 +364,6 @@
   }
 }
 
-/* Small Mobile */
 @media (max-width: 360px) {
   .login-container {
     padding: 12px;
@@ -293,6 +379,10 @@
   
   .login-header p {
     font-size: 13px;
+  }
+  
+  .login-header .logo {
+    width: 120px;
   }
   
   .form-group input {
@@ -312,7 +402,6 @@
   }
 }
 
-/* Landscape Mode */
 @media (max-height: 600px) and (orientation: landscape) {
   .login-container {
     padding: 16px;
@@ -332,6 +421,11 @@
     margin-bottom: 4px;
   }
   
+  .login-header .logo {
+    width: 100px;
+    margin-bottom: 8px;
+  }
+  
   .form-group {
     margin-bottom: 12px;
   }
@@ -346,7 +440,6 @@
   }
 }
 
-/* High-DPI Screens */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .login-container {
     -webkit-font-smoothing: antialiased;
@@ -354,7 +447,6 @@
   }
 }
 
-/* Ensure no overflow on any device */
 * {
   margin: 0;
   padding: 0;
