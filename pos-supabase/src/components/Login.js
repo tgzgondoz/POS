@@ -107,8 +107,7 @@ const Login = ({ setAuth }) => {
               e.target.style.display = 'none';
             }}
           />
-          <h2>NITROGO</h2>
-          <p>AUTO SPARE PARTS</p>
+       
           <span className="login-subtitle">Sign in to your account</span>
         </div>
 
