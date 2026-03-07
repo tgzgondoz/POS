@@ -16,6 +16,11 @@ const Orders = ({ auth }) => {
   const [dateFilter, setDateFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [error, setError] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedOrders, setPaginatedOrders] = useState([]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -122,6 +127,18 @@ const Orders = ({ auth }) => {
     setFilteredOrders(filtered);
   }, [orders, selectedUserId, dateFilter, paymentFilter]);
 
+  // Update paginated orders when filteredOrders, currentPage, or itemsPerPage changes
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    setPaginatedOrders(filteredOrders.slice(indexOfFirstItem, indexOfLastItem));
+  }, [filteredOrders, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters or items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedUserId, dateFilter, paymentFilter, itemsPerPage]);
+
   useEffect(() => {
     fetchOrders();
     fetchUsers();
@@ -208,6 +225,24 @@ const Orders = ({ auth }) => {
     return { total, todayCount, totalAmount, todayAmount };
   };
 
+  // Pagination functions
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredOrders.length / itemsPerPage)));
+  };
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const stats = getOrderStats();
 
   if (loading) {
@@ -330,7 +365,25 @@ const Orders = ({ auth }) => {
         </div>
 
         <div className="filter-info">
-          Showing {filteredOrders.length} of {orders.length} orders
+          Showing {filteredOrders.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+        </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="pagination-controls">
+        <div className="items-per-page">
+          <label htmlFor="items-per-page">Show:</label>
+          <select 
+            id="items-per-page" 
+            value={itemsPerPage} 
+            onChange={handleItemsPerPageChange}
+            className="items-per-page-select"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span>entries</span>
         </div>
       </div>
 
@@ -347,14 +400,14 @@ const Orders = ({ auth }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.length === 0 ? (
+            {paginatedOrders.length === 0 ? (
               <tr>
                 <td colSpan={auth.user?.role === 'admin' ? 6 : 5} className="no-data">
                   No orders found
                 </td>
               </tr>
             ) : (
-              filteredOrders.map(order => (
+              paginatedOrders.map(order => (
                 <tr key={order.id}>
                   <td className="order-id">#{order.id}</td>
                   {auth.user?.role === 'admin' && (
@@ -382,6 +435,35 @@ const Orders = ({ auth }) => {
             )}
           </tbody>
         </table>
+        
+        {/* Pagination */}
+        {filteredOrders.length > 0 && (
+          <div className="pagination">
+            <button 
+              onClick={handlePreviousPage} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={handleNextPage} 
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {showOrderDetails && selectedOrder && (

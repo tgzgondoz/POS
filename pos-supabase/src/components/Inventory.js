@@ -18,11 +18,45 @@ const Inventory = ({ auth }) => {
   const [updateType, setUpdateType] = useState("add");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedProducts, setPaginatedProducts] = useState([]);
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, []);
+
+  // Define filteredProducts based on current filters
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCategory = filterCategory === "all" || 
+                           String(product.category_id) === String(filterCategory);
+    
+    const matchesStock = filterStock === "all" ||
+                        (filterStock === "out" && product.stock_quantity === 0) ||
+                        (filterStock === "low" && product.stock_quantity < 10 && product.stock_quantity > 0) ||
+                        (filterStock === "medium" && product.stock_quantity >= 10 && product.stock_quantity < 30) ||
+                        (filterStock === "high" && product.stock_quantity >= 30);
+    
+    return matchesSearch && matchesCategory && matchesStock;
+  });
+
+  // Update paginated products when filteredProducts, currentPage, or itemsPerPage changes
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    setPaginatedProducts(filteredProducts.slice(indexOfFirstItem, indexOfLastItem));
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters or items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory, filterStock, itemsPerPage]);
 
   const fetchProducts = async () => {
     try {
@@ -133,22 +167,6 @@ const Inventory = ({ auth }) => {
     return { status: "high", label: "High Stock", color: "#38a169" };
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = filterCategory === "all" || 
-                           String(product.category_id) === String(filterCategory);
-    
-    const matchesStock = filterStock === "all" ||
-                        (filterStock === "out" && product.stock_quantity === 0) ||
-                        (filterStock === "low" && product.stock_quantity < 10 && product.stock_quantity > 0) ||
-                        (filterStock === "medium" && product.stock_quantity >= 10 && product.stock_quantity < 30) ||
-                        (filterStock === "high" && product.stock_quantity >= 30);
-    
-    return matchesSearch && matchesCategory && matchesStock;
-  });
-
   const inventoryStats = {
     totalProducts: products.length,
     totalStock: products.reduce((sum, p) => sum + p.stock_quantity, 0),
@@ -157,6 +175,25 @@ const Inventory = ({ auth }) => {
     lowStock: products.filter(p => p.stock_quantity < 10 && p.stock_quantity > 0).length,
     highStock: products.filter(p => p.stock_quantity >= 30).length
   };
+
+  // Pagination functions
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredProducts.length / itemsPerPage)));
+  };
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -172,7 +209,6 @@ const Inventory = ({ auth }) => {
             }}
           />
           <p>Loading inventory...</p>
-      
         </div>
       </div>
     );
@@ -301,7 +337,25 @@ const Inventory = ({ auth }) => {
         </div>
         
         <div className="filter-info">
-          Showing {filteredProducts.length} of {products.length} products
+          Showing {filteredProducts.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} products
+        </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="pagination-controls">
+        <div className="items-per-page">
+          <label htmlFor="items-per-page">Show:</label>
+          <select 
+            id="items-per-page" 
+            value={itemsPerPage} 
+            onChange={handleItemsPerPageChange}
+            className="items-per-page-select"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span>entries</span>
         </div>
       </div>
 
@@ -320,14 +374,14 @@ const Inventory = ({ auth }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.length === 0 ? (
+            {paginatedProducts.length === 0 ? (
               <tr>
                 <td colSpan="8" className="no-data">
                   No products match your filters
                 </td>
               </tr>
             ) : (
-              filteredProducts.map(product => {
+              paginatedProducts.map(product => {
                 const stockStatus = getStockStatus(product.stock_quantity);
                 const stockValue = product.stock_quantity * product.price;
                 
@@ -408,6 +462,35 @@ const Inventory = ({ auth }) => {
             )}
           </tbody>
         </table>
+        
+        {/* Pagination */}
+        {filteredProducts.length > 0 && (
+          <div className="pagination">
+            <button 
+              onClick={handlePreviousPage} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={handleNextPage} 
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="inventory-reports">
