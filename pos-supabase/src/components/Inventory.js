@@ -258,7 +258,7 @@ const Inventory = ({ auth }) => {
 
       <div className="inventory-summary">
         <div className="summary-card">
-          <div className="summary-icon">📦</div>
+         
           <div className="summary-content">
             <h3>Total Products</h3>
             <p className="summary-number">{inventoryStats.totalProducts}</p>
@@ -266,7 +266,7 @@ const Inventory = ({ auth }) => {
         </div>
         
         <div className="summary-card">
-          <div className="summary-icon">📊</div>
+         
           <div className="summary-content">
             <h3>Total Stock</h3>
             <p className="summary-number">{inventoryStats.totalStock} units</p>
@@ -274,7 +274,7 @@ const Inventory = ({ auth }) => {
         </div>
         
         <div className="summary-card">
-          <div className="summary-icon">💰</div>
+         
           <div className="summary-content">
             <h3>Inventory Value</h3>
             <p className="summary-number">${inventoryStats.totalValue.toFixed(2)}</p>
@@ -282,7 +282,7 @@ const Inventory = ({ auth }) => {
         </div>
         
         <div className="summary-card warning">
-          <div className="summary-icon">⚠️</div>
+          
           <div className="summary-content">
             <h3>Out of Stock</h3>
             <p className="summary-number">{inventoryStats.outOfStock}</p>
@@ -290,7 +290,7 @@ const Inventory = ({ auth }) => {
         </div>
         
         <div className="summary-card alert">
-          <div className="summary-icon">🔔</div>
+          
           <div className="summary-content">
             <h3>Low Stock</h3>
             <p className="summary-number">{inventoryStats.lowStock}</p>

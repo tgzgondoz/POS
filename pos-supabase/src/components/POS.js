@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import logo from "../images/logo.png"; // Import the logo
+import logo from "../images/logo.png";
 import "./POS.css";
 
 const POS = ({ auth }) => {
@@ -21,11 +21,20 @@ const POS = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [cartNote, setCartNote] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, []);
+
+  // Reset to first page when search or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
 
   const fetchProducts = async () => {
     try {
@@ -187,7 +196,6 @@ const POS = ({ auth }) => {
       const total = calculateTotal();
       const profit = calculateProfit();
 
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -205,7 +213,6 @@ const POS = ({ auth }) => {
 
       if (orderError) throw orderError;
 
-      // Create order items and update stock
       for (const item of cart) {
         const { error: itemError } = await supabase
           .from('order_items')
@@ -220,7 +227,6 @@ const POS = ({ auth }) => {
 
         if (itemError) throw itemError;
 
-        // Update stock
         const { error: stockError } = await supabase
           .from('products')
           .update({ 
@@ -231,7 +237,6 @@ const POS = ({ auth }) => {
         if (stockError) throw stockError;
       }
 
-      // Print receipt (optional)
       if (window.confirm("Print receipt?")) {
         printReceipt(order.id);
       }
@@ -243,7 +248,6 @@ const POS = ({ auth }) => {
       setCartNote("");
       setShowPaymentModal(false);
       
-      // Refresh products to update stock
       fetchProducts();
       
       setTimeout(() => setSuccess(""), 3000);
@@ -329,6 +333,7 @@ const POS = ({ auth }) => {
     receiptWindow.document.close();
   };
 
+  // Filter products
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -336,6 +341,38 @@ const POS = ({ auth }) => {
     const matchesCategory = selectedCategory === "all" || String(product.category_id) === String(selectedCategory);
     return matchesSearch && matchesCategory;
   });
+
+  // Pagination logic
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+  // Update items per page based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 430) {
+        setItemsPerPage(6);
+      } else if (width < 768) {
+        setItemsPerPage(8);
+      } else if (width < 1024) {
+        setItemsPerPage(10);
+      } else {
+        setItemsPerPage(12);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (loading) {
     return (
@@ -350,9 +387,6 @@ const POS = ({ auth }) => {
           }}
         />
         <p>Loading POS System...</p>
-        <p className="loading-hint">
-          Please wait while we load your products
-        </p>
       </div>
     );
   }
@@ -366,7 +400,7 @@ const POS = ({ auth }) => {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back
+            <span>Back</span>
           </button>
           <img 
             src={logo} 
@@ -403,7 +437,7 @@ const POS = ({ auth }) => {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
             <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
-          {success}
+          <span>{success}</span>
           <button onClick={() => setSuccess("")}>×</button>
         </div>
       )}
@@ -437,84 +471,151 @@ const POS = ({ auth }) => {
             </select>
           </div>
 
-          <div className="products-grid">
-            {filteredProducts.length === 0 ? (
-              <div className="no-products">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <p>No products found</p>
-              </div>
-            ) : (
-              filteredProducts.map(product => (
-                <div
-                  key={product.id}
-                  className={`product-card ${product.stock_quantity === 0 ? 'out-of-stock' : ''}`}
-                  onClick={() => product.stock_quantity > 0 && addToCart(product)}
-                >
-                  <div className="product-badge" data-status={
-                    product.stock_quantity === 0 ? 'out' :
-                    product.stock_quantity < 10 ? 'low' : 'in'
-                  }>
-                    {product.stock_quantity === 0 ? 'Out of Stock' : 
-                     product.stock_quantity < 10 ? 'Low Stock' : 'In Stock'}
-                  </div>
-                  
-                  {product.image_url && (
-                    <div className="product-image">
-                      <img src={product.image_url} alt={product.name} />
-                    </div>
-                  )}
-                  
-                  <div className="product-info">
-                    <h3 className="product-name">{product.name}</h3>
-                    
-                    <div className="product-details">
-                      {product.sku && (
-                        <div className="detail-chip">
-                          <span>SKU: {product.sku}</span>
-                        </div>
-                      )}
-                      <div className="detail-chip">
-                        <span>{product.category_name || 'Uncategorized'}</span>
-                      </div>
+          <div className="products-grid-container">
+            <div className="products-grid">
+              {currentItems.length === 0 ? (
+                <div className="no-products">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <p>No products found</p>
+                </div>
+              ) : (
+                currentItems.map(product => (
+                  <div
+                    key={product.id}
+                    className={`product-card ${product.stock_quantity === 0 ? 'out-of-stock' : ''}`}
+                  >
+                    <div className="product-badge" data-status={
+                      product.stock_quantity === 0 ? 'out' :
+                      product.stock_quantity < 10 ? 'low' : 'in'
+                    }>
+                      {product.stock_quantity === 0 ? 'Out of Stock' : 
+                       product.stock_quantity < 10 ? 'Low Stock' : 'In Stock'}
                     </div>
                     
-                    {product.description && (
-                      <div className="product-description">
-                        {product.description}
-                      </div>
-                    )}
-                    
-                    <div className="product-price">
-                      ${product.price.toFixed(2)}
-                    </div>
-                    
-                    <div className="product-stock">
-                      <div className="stock-bar">
-                        <div 
-                          className={`stock-fill ${product.stock_quantity < 10 ? 'low' : ''}`}
-                          style={{ width: `${Math.min((product.stock_quantity / 100) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <span className="stock-count">{product.stock_quantity} units available</span>
-                    </div>
-                    
+                    {/* Add to Cart Icon Button */}
                     {product.stock_quantity > 0 && (
-                      <button className="add-to-cart-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <button 
+                        className="add-to-cart-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product);
+                        }}
+                        title="Add to Cart"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="9" cy="21" r="1"/>
                           <circle cx="20" cy="21" r="1"/>
                           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        Add to Cart
                       </button>
                     )}
+                    
+                    {product.image_url && (
+                      <div className="product-image">
+                        <img src={product.image_url} alt={product.name} />
+                      </div>
+                    )}
+                    
+                    <div className="product-info">
+                      {product.sku && (
+                        <span className="product-sku">{product.sku}</span>
+                      )}
+                      
+                      <h3 className="product-name">{product.name}</h3>
+                      
+                      {product.category_name && (
+                        <span className="product-category">{product.category_name}</span>
+                      )}
+                      
+                      {product.description && (
+                        <div className="product-description">
+                          {product.description}
+                        </div>
+                      )}
+                      
+                      <div className="price-stock-row">
+                        <div className="product-price">
+                          {product.price.toFixed(2)}
+                        </div>
+                        
+                        <div className="stock-indicator-compact">
+                          <span className={`stock-dot ${
+                            product.stock_quantity === 0 ? 'out-of-stock' :
+                            product.stock_quantity < 10 ? 'low-stock' : 'in-stock'
+                          }`} />
+                          <span className="stock-text">
+                            {product.stock_quantity}
+                            <span> left</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                ))
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <div className="pagination-info">
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} products
                 </div>
-              ))
+                <div className="pagination-buttons">
+                  <button 
+                    className="pagination-btn" 
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    Prev
+                  </button>
+                  
+                  <div className="pagination-numbers">
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pageNum = i + 1;
+                      if (
+                        pageNum === 1 ||
+                        pageNum === totalPages ||
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNum}
+                            className={`page-number ${currentPage === pageNum ? 'active' : ''}`}
+                            onClick={() => paginate(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      } else if (
+                        pageNum === currentPage - 2 ||
+                        pageNum === currentPage + 2
+                      ) {
+                        return <span key={pageNum} className="page-dots">...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+                  
+                  <button 
+                    className="pagination-btn" 
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
