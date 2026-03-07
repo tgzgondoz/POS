@@ -15,6 +15,12 @@ const Products = ({ auth }) => {
   const [productToDelete, setProductToDelete] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedProducts, setPaginatedProducts] = useState([]);
+  
   const [formData, setFormData] = useState({
     name_part: "", // Combined field for name and part number
     description: "",
@@ -28,6 +34,18 @@ const Products = ({ auth }) => {
     fetchProducts();
     fetchCategories();
   }, []);
+
+  // Update paginated products when products, currentPage, or itemsPerPage changes
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    setPaginatedProducts(products.slice(indexOfFirstItem, indexOfLastItem));
+  }, [products, currentPage, itemsPerPage]);
+
+  // Reset to first page when items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   const fetchProducts = async () => {
     try {
@@ -316,6 +334,25 @@ const Products = ({ auth }) => {
     setSuccess("");
   };
 
+  // Pagination functions
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)));
+  };
+
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+
   if (loading) {
     return (
       <div className="products-container">
@@ -432,6 +469,27 @@ const Products = ({ auth }) => {
         </div>
       </div>
 
+      {/* Pagination Controls */}
+      <div className="pagination-controls">
+        <div className="items-per-page">
+          <label htmlFor="items-per-page">Show:</label>
+          <select 
+            id="items-per-page" 
+            value={itemsPerPage} 
+            onChange={handleItemsPerPageChange}
+            className="items-per-page-select"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span>entries</span>
+        </div>
+        <div className="pagination-info">
+          Showing {products.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, products.length)} of {products.length} entries
+        </div>
+      </div>
+
       <div className="products-table-container">
         <table className="products-table">
           <thead>
@@ -449,14 +507,14 @@ const Products = ({ auth }) => {
             </tr>
           </thead>
           <tbody>
-            {products.length === 0 ? (
+            {paginatedProducts.length === 0 ? (
               <tr>
                 <td colSpan={auth.user?.role === 'admin' ? 10 : 9} className="no-data">
                   No products found. Add your first product!
                 </td>
               </tr>
             ) : (
-              products.map(product => {
+              paginatedProducts.map(product => {
                 const profit = calculateProfit(product);
                 const margin = calculateMargin(product);
                 const profitColor = profit >= 0 ? '#38a169' : '#e53e3e';
@@ -547,6 +605,35 @@ const Products = ({ auth }) => {
             </strong>
           </div>
         </div>
+        
+        {/* Pagination */}
+        {products.length > 0 && (
+          <div className="pagination">
+            <button 
+              onClick={handlePreviousPage} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={handleNextPage} 
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Product Modal */}

@@ -16,11 +16,28 @@ const Categories = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [stats, setStats] = useState({});
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [paginatedCategories, setPaginatedCategories] = useState([]);
 
   useEffect(() => {
     console.log("Auth in Categories:", auth);
     fetchCategories();
   }, [auth]);
+
+  // Update paginated categories when categories, currentPage, or itemsPerPage changes
+  useEffect(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    setPaginatedCategories(categories.slice(indexOfFirstItem, indexOfLastItem));
+  }, [categories, currentPage, itemsPerPage]);
+
+  // Reset to first page when items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   const fetchCategories = async () => {
     console.log("Fetching categories...");
@@ -197,6 +214,25 @@ const Categories = ({ auth }) => {
     }).format(amount);
   };
 
+  // Pagination functions
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(categories.length / itemsPerPage)));
+  };
+
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+
   // Show loading state
   if (loading) {
     return (
@@ -218,7 +254,6 @@ const Categories = ({ auth }) => {
           />
           <div className="spinner"></div>
           <p>Loading categories...</p>
-  
         </div>
       </div>
     );
@@ -335,8 +370,29 @@ const Categories = ({ auth }) => {
             </div>
           </div>
 
+          {/* Pagination Controls */}
+          <div className="pagination-controls">
+            <div className="items-per-page">
+              <label htmlFor="items-per-page">Show:</label>
+              <select 
+                id="items-per-page" 
+                value={itemsPerPage} 
+                onChange={handleItemsPerPageChange}
+                className="items-per-page-select"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span>categories</span>
+            </div>
+            <div className="pagination-info">
+              Showing {categories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, categories.length)} of {categories.length} categories
+            </div>
+          </div>
+
           <div className="categories-grid">
-            {categories.map(category => (
+            {paginatedCategories.map(category => (
               <div key={category.id} className="category-card">
                 <div className="category-header">
                   <h3>{category.name}</h3>
@@ -393,6 +449,35 @@ const Categories = ({ auth }) => {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {categories.length > 0 && (
+            <div className="pagination">
+              <button 
+                onClick={handlePreviousPage} 
+                disabled={currentPage === 1}
+                className="pagination-btn"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button 
+                onClick={handleNextPage} 
+                disabled={currentPage === totalPages}
+                className="pagination-btn"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       )}
 

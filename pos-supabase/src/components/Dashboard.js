@@ -693,7 +693,7 @@ const Dashboard = ({ auth, setAuth }) => {
       {/* Key Metrics */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📦</div>
+          
           <div className="stat-content">
             <h3>Total Products</h3>
             <p className="stat-number">{stats.totalProducts}</p>
@@ -703,7 +703,7 @@ const Dashboard = ({ auth, setAuth }) => {
         {auth.user?.role === 'admin' && (
           <>
             <div className="stat-card profit-card">
-              <div className="stat-icon">💰</div>
+             
               <div className="stat-content">
                 <h3>Today's Sales</h3>
                 <p className="stat-number">{formatCurrency(stats.todaySales)}</p>
@@ -714,7 +714,7 @@ const Dashboard = ({ auth, setAuth }) => {
             </div>
             
             <div className="stat-card profit-card">
-              <div className="stat-icon">📊</div>
+              
               <div className="stat-content">
                 <h3>Period Sales</h3>
                 <p className="stat-number">{formatCurrency(stats.monthlySales)}</p>
@@ -728,7 +728,7 @@ const Dashboard = ({ auth, setAuth }) => {
         
         {auth.user?.role === 'admin' && (
           <div className="stat-card profit-card">
-            <div className="stat-icon">📈</div>
+            
             <div className="stat-content">
               <h3>Avg. Margin</h3>
               <p className="stat-number">{stats.averageProfitMargin.toFixed(1)}%</p>
@@ -741,7 +741,7 @@ const Dashboard = ({ auth, setAuth }) => {
 
         {auth.user?.role === 'admin' && (
           <div className="stat-card warning">
-            <div className="stat-icon">⚠️</div>
+           
             <div className="stat-content">
               <h3>Low Stock Items</h3>
               <p className="stat-number">{stats.lowStock}</p>
