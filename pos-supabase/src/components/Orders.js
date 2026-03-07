@@ -224,9 +224,6 @@ const Orders = ({ auth }) => {
             }}
           />
           <p>Loading orders...</p>
-          <p className="loading-hint">
-            Please wait while we load your order history
-          </p>
         </div>
       </div>
     );

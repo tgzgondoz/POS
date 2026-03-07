@@ -330,9 +330,6 @@ const Products = ({ auth }) => {
             }}
           />
           <p>Loading products...</p>
-          <p className="loading-hint">
-            If this takes too long, check the browser console (F12) for errors
-          </p>
         </div>
       </div>
     );

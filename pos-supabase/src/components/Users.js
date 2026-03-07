@@ -416,9 +416,6 @@ const Users = ({ auth }) => {
             }}
           />
           <p>Loading users...</p>
-          <p className="loading-hint">
-            Please wait while we load user data
-          </p>
         </div>
       </div>
     );

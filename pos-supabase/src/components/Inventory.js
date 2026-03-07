@@ -172,9 +172,7 @@ const Inventory = ({ auth }) => {
             }}
           />
           <p>Loading inventory...</p>
-          <p className="loading-hint">
-            Please wait while we load your inventory data
-          </p>
+      
         </div>
       </div>
     );

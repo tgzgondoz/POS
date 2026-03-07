@@ -218,9 +218,7 @@ const Categories = ({ auth }) => {
           />
           <div className="spinner"></div>
           <p>Loading categories...</p>
-          <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1rem' }}>
-            If this takes too long, check the browser console (F12) for errors
-          </p>
+  
         </div>
       </div>
     );
