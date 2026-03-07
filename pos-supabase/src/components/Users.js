@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./Users.css";
 
 const Users = ({ auth }) => {
@@ -404,9 +405,20 @@ const Users = ({ auth }) => {
   if (loading) {
     return (
       <div className="users-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
+        <div className="loading-screen">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
           <p>Loading users...</p>
+          <p className="loading-hint">
+            Please wait while we load user data
+          </p>
         </div>
       </div>
     );
@@ -417,12 +429,26 @@ const Users = ({ auth }) => {
       {/* Back Button Section */}
       <div className="back-section">
         <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
         </button>
       </div>
 
       <div className="users-header">
-        <h1>User Management</h1>
+        <div className="header-title">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="header-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>User Management</h1>
+        </div>
         <div className="header-right">
           {success && (
             <div className="success-message">
@@ -535,7 +561,18 @@ const Users = ({ auth }) => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingUser ? 'Edit User' : 'Add New User'}</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>{editingUser ? 'Edit User' : 'Add New User'}</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowModal(false)}

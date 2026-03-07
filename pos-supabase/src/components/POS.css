@@ -1561,3 +1561,112 @@
     overflow: visible;
   }
 }
+/* Add to your POS.css */
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.loading-logo {
+  height: 100px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 24px;
+  animation: gentlePulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.loading-screen p {
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.loading-hint {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Header Logo */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  height: 35px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Modal Header Title */
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-logo {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-left {
+    flex-wrap: wrap;
+  }
+  
+  .header-logo {
+    height: 30px;
+  }
+  
+  .loading-logo {
+    height: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-logo {
+    height: 25px;
+  }
+  
+  .loading-logo {
+    height: 70px;
+  }
+  
+  .modal-header-title {
+    flex-wrap: wrap;
+  }
+  
+  .modal-logo {
+    height: 25px;
+  }
+}

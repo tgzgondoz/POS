@@ -888,3 +888,154 @@
     justify-content: center;
   }
 }
+/* Add to your Orders.css */
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.loading-logo {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 24px;
+  animation: gentlePulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.loading-screen p {
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.loading-hint {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Header Logo */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Modal Header Title */
+.modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-logo {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Back Button Enhancement */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 4px;
+}
+
+.back-button svg {
+  transition: transform 0.2s ease;
+}
+
+.back-button:hover svg {
+  transform: translateX(-2px);
+}
+
+.back-button:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-title {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .header-logo {
+    height: 35px;
+  }
+
+  .loading-logo {
+    height: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-title {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header-logo {
+    height: 32px;
+  }
+
+  .loading-logo {
+    height: 60px;
+  }
+
+  .modal-header-title {
+    flex-wrap: wrap;
+  }
+
+  .modal-logo {
+    height: 25px;
+  }
+}

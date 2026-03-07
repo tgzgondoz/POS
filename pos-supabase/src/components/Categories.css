@@ -763,3 +763,139 @@
     justify-content: center;
   }
 }
+/* Add to your existing Categories.css */
+
+/* Loading State Enhancement */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.loading img {
+  margin-bottom: 24px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Logo Styles */
+.logo-small {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-medium {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-large {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Header Logo Animation */
+.categories-header img {
+  transition: transform 0.2s ease;
+}
+
+.categories-header img:hover {
+  transform: scale(1.05);
+}
+
+/* Modal Header Enhancement */
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  z-index: 10;
+}
+
+.modal-header h2 {
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Back Button Enhancement */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: translateX(0);
+}
+
+/* Responsive adjustments for logo */
+@media (max-width: 768px) {
+  .categories-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .categories-header > div:first-child {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .categories-header > div:first-child {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .categories-header img {
+    height: 32px;
+  }
+
+  .modal-header > div:first-child {
+    flex-wrap: wrap;
+  }
+
+  .loading img {
+    height: 50px;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./Products.css";
 
 const Products = ({ auth }) => {
@@ -318,9 +319,20 @@ const Products = ({ auth }) => {
   if (loading) {
     return (
       <div className="products-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
+        <div className="loading-screen">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
           <p>Loading products...</p>
+          <p className="loading-hint">
+            If this takes too long, check the browser console (F12) for errors
+          </p>
         </div>
       </div>
     );
@@ -331,12 +343,26 @@ const Products = ({ auth }) => {
       {/* Back Button Section */}
       <div className="back-section">
         <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
         </button>
       </div>
 
       <div className="products-header">
-        <h1>Products Management</h1>
+        <div className="header-title">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="header-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>Products Management</h1>
+        </div>
         <div className="header-right">
           {success && (
             <div className="success-message">
@@ -531,7 +557,18 @@ const Products = ({ auth }) => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal product-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowModal(false)}
@@ -723,7 +760,18 @@ const Products = ({ auth }) => {
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modal delete-confirm-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Confirm Delete</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>Confirm Delete</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={cancelDelete}

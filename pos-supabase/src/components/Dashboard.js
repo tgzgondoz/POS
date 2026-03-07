@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { productsApi, ordersApi } from "../lib/api";
+import logo from "../images/logo.png"; // Import the logo
 import "./Dashboard.css";
 
 const Dashboard = ({ auth, setAuth }) => {
@@ -647,7 +648,22 @@ const Dashboard = ({ auth, setAuth }) => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="header-left">
-          <h1>{getGreeting()}, {auth.user?.name || 'User'}!</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+            <img 
+              src={logo} 
+              alt="Nitrogo Auto Spare Parts" 
+              style={{ 
+                height: '40px', 
+                width: 'auto',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+              }}
+            />
+            <h1>{getGreeting()}, {auth.user?.name || 'User'}!</h1>
+          </div>
           <p className="welcome-text">
             {auth.user?.role === 'admin' 
               ? "Here's what's happening with your store today." 
@@ -655,18 +671,6 @@ const Dashboard = ({ auth, setAuth }) => {
           </p>
         </div>
         <div className="header-right">
-          <div className="date-range-selector">
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="date-range-select"
-            >
-              <option value="week">Last 7 Days</option>
-              <option value="month">Last 30 Days</option>
-              <option value="quarter">Last 90 Days</option>
-              <option value="year">Last Year</option>
-            </select>
-          </div>
           <div className="user-profile">
             <div className="profile-info">
               <span className="profile-name">{auth.user?.name || 'User'}</span>

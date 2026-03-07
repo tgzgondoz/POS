@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./POS.css";
 
 const POS = ({ auth }) => {
@@ -280,7 +281,8 @@ const POS = ({ auth }) => {
         <body>
           <div class="receipt">
             <div class="header">
-              <h2>YOUR STORE</h2>
+              <h2>NITROGO</h2>
+              <p>AUTO SPARE PARTS</p>
               <p>123 Main Street, City</p>
               <p>Tel: (555) 123-4567</p>
               <p>${date}</p>
@@ -338,8 +340,19 @@ const POS = ({ auth }) => {
   if (loading) {
     return (
       <div className="loading-screen">
-        <div className="loading-spinner"></div>
+        <img 
+          src={logo} 
+          alt="Nitrogo Auto Spare Parts" 
+          className="loading-logo"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = 'none';
+          }}
+        />
         <p>Loading POS System...</p>
+        <p className="loading-hint">
+          Please wait while we load your products
+        </p>
       </div>
     );
   }
@@ -355,6 +368,15 @@ const POS = ({ auth }) => {
             </svg>
             Back
           </button>
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="header-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
           <h1>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
@@ -664,7 +686,18 @@ const POS = ({ auth }) => {
         <div className="modal-overlay" onClick={() => !processing && setShowPaymentModal(false)}>
           <div className="payment-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Complete Payment</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>Complete Payment</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => !processing && setShowPaymentModal(false)}

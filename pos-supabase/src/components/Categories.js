@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./Categories.css";
 
 const Categories = ({ auth }) => {
@@ -201,6 +202,20 @@ const Categories = ({ auth }) => {
     return (
       <div className="categories-container">
         <div className="loading">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            style={{ 
+              height: '60px', 
+              width: 'auto',
+              objectFit: 'contain',
+              marginBottom: '20px'
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
           <div className="spinner"></div>
           <p>Loading categories...</p>
           <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1rem' }}>
@@ -216,12 +231,30 @@ const Categories = ({ auth }) => {
       {/* Back Button Section */}
       <div className="back-section">
         <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
         </button>
       </div>
 
       <div className="categories-header">
-        <h1>Product Categories</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            style={{ 
+              height: '40px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>Product Categories</h1>
+        </div>
         <div className="header-actions">
           {success && (
             <div className="success-message">
@@ -369,7 +402,22 @@ const Categories = ({ auth }) => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  style={{ 
+                    height: '30px', 
+                    width: 'auto',
+                    objectFit: 'contain'
+                  }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowModal(false)}

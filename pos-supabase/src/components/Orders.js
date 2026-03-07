@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import logo from "../images/logo.png"; // Import the logo
 import "./Orders.css";
 
 const Orders = ({ auth }) => {
@@ -210,7 +211,25 @@ const Orders = ({ auth }) => {
   const stats = getOrderStats();
 
   if (loading) {
-    return <div className="loading">Loading orders...</div>;
+    return (
+      <div className="orders-container">
+        <div className="loading-screen">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <p>Loading orders...</p>
+          <p className="loading-hint">
+            Please wait while we load your order history
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -218,12 +237,26 @@ const Orders = ({ auth }) => {
       {/* Back Button Section */}
       <div className="back-section">
         <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
         </button>
       </div>
 
       <div className="orders-header">
-        <h1>Orders History</h1>
+        <div className="header-title">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="header-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>Orders History</h1>
+        </div>
         <div className="orders-stats">
           <div className="stat-item">
             <span className="stat-label">Total Orders</span>
@@ -358,7 +391,18 @@ const Orders = ({ auth }) => {
         <div className="modal-overlay">
           <div className="modal order-details-modal">
             <div className="modal-header">
-              <h2>Order #{selectedOrder.order.id} Details</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>Order #{selectedOrder.order.id} Details</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowOrderDetails(false)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { productsApi, categoriesApi } from "../lib/api";
+import logo from "../images/logo.png"; // Import the logo
 import "./Inventory.css";
 
 const Inventory = ({ auth }) => {
@@ -158,7 +159,25 @@ const Inventory = ({ auth }) => {
   };
 
   if (loading) {
-    return <div className="loading">Loading inventory...</div>;
+    return (
+      <div className="inventory-container">
+        <div className="loading-screen">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <p>Loading inventory...</p>
+          <p className="loading-hint">
+            Please wait while we load your inventory data
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -166,12 +185,26 @@ const Inventory = ({ auth }) => {
       {/* Back Button Section */}
       <div className="back-section">
         <button onClick={() => navigate(-1)} className="back-button">
-          ← Back
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
         </button>
       </div>
 
       <div className="inventory-header">
-        <h1>Inventory Management</h1>
+        <div className="header-title">
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="header-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>Inventory Management</h1>
+        </div>
         <div className="header-actions">
           {success && (
             <div className="success-message">
@@ -429,7 +462,18 @@ const Inventory = ({ auth }) => {
         <div className="modal-overlay">
           <div className="modal stock-update-modal">
             <div className="modal-header">
-              <h2>Update Stock: {selectedProduct.name}</h2>
+              <div className="modal-header-title">
+                <img 
+                  src={logo} 
+                  alt="Nitrogo" 
+                  className="modal-logo"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <h2>Update Stock: {selectedProduct.name}</h2>
+              </div>
               <button 
                 className="close-btn"
                 onClick={() => setShowUpdateModal(false)}
