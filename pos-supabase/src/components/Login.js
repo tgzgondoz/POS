@@ -161,7 +161,7 @@ const Login = ({ setAuth }) => {
 
           <div className="form-group " >
              <span className="login-subtitle">Password</span>
-             <br />
+              <br />
             <input
               type="password"
               id="password"

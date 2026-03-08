@@ -9,7 +9,7 @@
   --accent: #38a169;       /* Green - success, eco-friendly parts */
   --text-primary: #1f2937; /* Dark gray for main text */
   --text-secondary: #4b5563; /* Medium gray for secondary text */
-  --text-muted: #b9bcc2;   /* Light gray for placeholder text */
+  --text-muted: #6b7280;   /* Light gray for placeholder text */
   --bg-primary: #f3f4f6;   /* Light gray background */
   --bg-card: #ffffff;      /* White card background */
   --border-light: #e5e7eb; /* Light gray borders */
@@ -462,7 +462,6 @@
   .form-group label {
     font-size: 16px;
     margin-bottom: 6px;
-    color: #ff2626;
   }
   
   .form-group input {
