@@ -310,7 +310,29 @@ const Categories = ({ auth }) => {
 
   return (
     <div className="categories-container">
-     
+      {/* Back Button Section */}
+      <div className="back-section">
+        <div className="back-section">
+          <button
+            onClick={() => navigate(-1)}
+            className="back-button"
+            style={{ color: "#ffffff", background: "#ff0000" }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ marginRight: "4px" }}
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+        </div>
+      </div>
 
       <div className="categories-header">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -355,7 +377,6 @@ const Categories = ({ auth }) => {
           )}
         </div>
       </div>
-      
 
       {error && (
         <div className="error-message">

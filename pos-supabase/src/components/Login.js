@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import logo from "../images/logo.png"; // Import the logo
+import bgImage from "../images/bg.jpg"; // Import the background image
 import "./Login.css";
 
 const Login = ({ setAuth }) => {
@@ -96,7 +97,7 @@ const Login = ({ setAuth }) => {
   // Show loading state with logo
   if (loading) {
     return (
-      <div className="login-container">
+      <div className="login-container" style={{ backgroundImage: `url(${bgImage})` }}>
         <div className="loading-state">
           <img 
             src={logo} 
@@ -114,7 +115,7 @@ const Login = ({ setAuth }) => {
   }
 
   return (
-    <div className="login-container">
+    <div className="login-container" style={{ backgroundImage: `url(${bgImage})` }}>
       <div className="login-card">
         <div className="login-header">
           {/* Nitrogo Logo - Using import */}
@@ -181,7 +182,7 @@ const Login = ({ setAuth }) => {
 
         {/* Demo credentials section */}
         <div className="demo-credentials">
-          <p>Power by oneGondo +263 78 3242 506</p>
+          <p>Powered by oneGondo +263 78 3242 506</p>
         </div>
       </div>
     </div>
