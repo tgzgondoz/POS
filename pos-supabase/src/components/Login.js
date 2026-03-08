@@ -146,7 +146,8 @@ const Login = ({ setAuth }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+             <span className="login-subtitle">Email</span>
+             <br />
             <input
               type="email"
               id="email"
@@ -158,8 +159,9 @@ const Login = ({ setAuth }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password u</label>
+          <div className="form-group " >
+             <span className="login-subtitle">Password</span>
+             <br />
             <input
               type="password"
               id="password"
