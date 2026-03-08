@@ -108,7 +108,7 @@ const Login = ({ setAuth }) => {
               e.target.style.display = 'none';
             }}
           />
-          <p className="loading-text">Signing in...</p>
+          <p className="loading-text">...</p>
         </div>
       </div>
     );
