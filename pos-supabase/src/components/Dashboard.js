@@ -703,11 +703,21 @@ const Dashboard = ({ auth, setAuth }) => {
     return new Intl.NumberFormat("en-US").format(value);
   };
 
+  // UPDATED LOADING SECTION WITH LOGO AND RED SPINNER
   if (loading) {
     return (
       <div className="dashboard-container">
         <div className="loading">
-          <div className="spinner"></div>
+          <img 
+            src={logo} 
+            alt="Nitrogo Auto Spare Parts" 
+            className="loading-logo"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <div className="spinner red-spinner"></div>
           <p>Loading dashboard...</p>
         </div>
       </div>
@@ -1169,7 +1179,7 @@ const Dashboard = ({ auth, setAuth }) => {
           </div>
 
           <div className="bottom-content-row">
-            {/* Recent Orders */}
+            {/* Recent Orders - This section appears to be commented out in your original code */}
            
             {/* Top Products by Value */}
             <div className="top-products">
