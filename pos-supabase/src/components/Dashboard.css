@@ -318,6 +318,7 @@ html, body {
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
+  text-align: center;
 }
 
 /* Reports Section */

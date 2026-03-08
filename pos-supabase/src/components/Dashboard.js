@@ -834,7 +834,6 @@ const Dashboard = ({ auth, setAuth }) => {
               to={action.to}
               className={`action-card ${action.primary ? "primary" : ""}`}
             >
-              <div className="action-icon">{action.icon}</div>
               <div className="action-content">
                 <h3>{action.title}</h3>
               </div>
