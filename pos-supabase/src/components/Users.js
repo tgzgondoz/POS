@@ -566,7 +566,7 @@ const Users = ({ auth }) => {
                   <td>{user.name}</td>
                   <td>
                     <span className={`role-badge ${user.role}`}>
-                      {user.role === 'admin' ? '👑 Admin' : '💼 Cashier'}
+                      {user.role === 'admin' ? 'Admin' : 'Cashier'}
                     </span>
                   </td>
                   <td>{formatDate(user.created_at)}</td>
@@ -633,10 +633,10 @@ const Users = ({ auth }) => {
             Total Users: <strong>{users.length}</strong>
           </div>
           <div className="summary">
-            <span style={{ color: '#dc3545' }}>👑 Admins:</span> <strong>{users.filter(u => u.role === 'admin').length}</strong>
+            <span style={{ color: '#dc3545' }}>Admins:</span> <strong>{users.filter(u => u.role === 'admin').length}</strong>
           </div>
           <div className="summary">
-            <span style={{ color: '#28a745' }}>💼 Cashiers:</span> <strong>{users.filter(u => u.role === 'cashier').length}</strong>
+            <span style={{ color: '#28a745' }}>Cashiers:</span> <strong>{users.filter(u => u.role === 'cashier').length}</strong>
           </div>
         </div>
       </div>

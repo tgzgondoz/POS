@@ -17,6 +17,10 @@ const Categories = ({ auth }) => {
   const [success, setSuccess] = useState("");
   const [stats, setStats] = useState({});
   
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -27,12 +31,25 @@ const Categories = ({ auth }) => {
     fetchCategories();
   }, [auth]);
 
-  // Update paginated categories when categories, currentPage, or itemsPerPage changes
+  // Filter categories based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredCategories(categories);
+    } else {
+      const filtered = categories.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+    }
+    setCurrentPage(1); // Reset to first page on search
+  }, [searchTerm, categories]);
+
+  // Update paginated categories when filtered categories, currentPage, or itemsPerPage changes
   useEffect(() => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    setPaginatedCategories(categories.slice(indexOfFirstItem, indexOfLastItem));
-  }, [categories, currentPage, itemsPerPage]);
+    setPaginatedCategories(filteredCategories.slice(indexOfFirstItem, indexOfLastItem));
+  }, [filteredCategories, currentPage, itemsPerPage]);
 
   // Reset to first page when items per page changes
   useEffect(() => {
@@ -122,6 +139,14 @@ const Categories = ({ auth }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
   };
 
   const handleSubmit = async (e) => {
@@ -228,10 +253,10 @@ const Categories = ({ auth }) => {
   };
 
   const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(categories.length / itemsPerPage)));
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredCategories.length / itemsPerPage)));
   };
 
-  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
 
   // Show loading state
   if (loading) {
@@ -317,6 +342,36 @@ const Categories = ({ auth }) => {
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className="search-section">
+        <div className="search-container">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search categories by name..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button onClick={clearSearch} className="clear-search-btn" title="Clear search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+        {searchTerm && filteredCategories.length > 0 && (
+          <div className="search-results-count">
+            Found {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
+          </div>
+        )}
+      </div>
+
       {/* Show message if no categories */}
       {categories.length === 0 ? (
         <div className="no-data" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -342,6 +397,18 @@ const Categories = ({ auth }) => {
               + Add Category
             </button>
           )}
+        </div>
+      ) : filteredCategories.length === 0 && searchTerm ? (
+        <div className="no-search-results">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <h3>No categories found</h3>
+          <p>No categories match "{searchTerm}". Try a different search term.</p>
+          <button onClick={clearSearch} className="clear-search-btn-text">
+            Clear search
+          </button>
         </div>
       ) : (
         <>
@@ -387,7 +454,8 @@ const Categories = ({ auth }) => {
               <span>categories</span>
             </div>
             <div className="pagination-info">
-              Showing {categories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, categories.length)} of {categories.length} categories
+              Showing {filteredCategories.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length} categories
+              {searchTerm && ` (filtered from ${categories.length} total)`}
             </div>
           </div>
 
@@ -451,7 +519,7 @@ const Categories = ({ auth }) => {
           </div>
 
           {/* Pagination */}
-          {categories.length > 0 && (
+          {filteredCategories.length > 0 && (
             <div className="pagination">
               <button 
                 onClick={handlePreviousPage} 

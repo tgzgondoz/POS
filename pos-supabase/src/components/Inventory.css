@@ -25,10 +25,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  background: white;
   padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -178,10 +175,7 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
-  background: white;
   padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
 }
 
 .filter-group {

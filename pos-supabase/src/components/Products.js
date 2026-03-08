@@ -16,6 +16,10 @@ const Products = ({ auth }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -35,12 +39,31 @@ const Products = ({ auth }) => {
     fetchCategories();
   }, []);
 
-  // Update paginated products when products, currentPage, or itemsPerPage changes
+  // Filter products based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          product.name.toLowerCase().includes(searchLower) ||
+          (product.part_number && product.part_number.toLowerCase().includes(searchLower)) ||
+          (product.category_name && product.category_name.toLowerCase().includes(searchLower)) ||
+          product.id.toString().includes(searchLower)
+        );
+      });
+      setFilteredProducts(filtered);
+    }
+    setCurrentPage(1); // Reset to first page on search
+  }, [searchTerm, products]);
+
+  // Update paginated products when filtered products, currentPage, or itemsPerPage changes
   useEffect(() => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    setPaginatedProducts(products.slice(indexOfFirstItem, indexOfLastItem));
-  }, [products, currentPage, itemsPerPage]);
+    setPaginatedProducts(filteredProducts.slice(indexOfFirstItem, indexOfLastItem));
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   // Reset to first page when items per page changes
   useEffect(() => {
@@ -102,6 +125,14 @@ const Products = ({ auth }) => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
   };
 
   // Parse combined name/part field
@@ -348,10 +379,10 @@ const Products = ({ auth }) => {
   };
 
   const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)));
+    setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredProducts.length / itemsPerPage)));
   };
 
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -434,6 +465,36 @@ const Products = ({ auth }) => {
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className="search-section">
+        <div className="search-container">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search products by name, part number, category, or ID..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button onClick={clearSearch} className="clear-search-btn" title="Clear search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="search-results-count">
+            Found {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+          </div>
+        )}
+      </div>
+
       {/* Summary Cards */}
       <div className="products-summary">
         <div className="summary-card">
@@ -486,7 +547,8 @@ const Products = ({ auth }) => {
           <span>entries</span>
         </div>
         <div className="pagination-info">
-          Showing {products.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, products.length)} of {products.length} entries
+          Showing {filteredProducts.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} entries
+          {searchTerm && ` (filtered from ${products.length} total)`}
         </div>
       </div>
 
@@ -507,10 +569,24 @@ const Products = ({ auth }) => {
             </tr>
           </thead>
           <tbody>
-            {paginatedProducts.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <tr>
                 <td colSpan={auth.user?.role === 'admin' ? 10 : 9} className="no-data">
-                  No products found. Add your first product!
+                  {searchTerm ? (
+                    <div className="no-search-results">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                      <h3>No products found</h3>
+                      <p>No products match "{searchTerm}". Try a different search term.</p>
+                      <button onClick={clearSearch} className="clear-search-btn-text">
+                        Clear search
+                      </button>
+                    </div>
+                  ) : (
+                    "No products found. Add your first product!"
+                  )}
                 </td>
               </tr>
             ) : (
@@ -607,7 +683,7 @@ const Products = ({ auth }) => {
         </div>
         
         {/* Pagination */}
-        {products.length > 0 && (
+        {filteredProducts.length > 0 && (
           <div className="pagination">
             <button 
               onClick={handlePreviousPage} 
