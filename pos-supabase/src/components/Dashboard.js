@@ -743,16 +743,10 @@ const Dashboard = ({ auth, setAuth }) => {
               {getGreeting()}, {auth.user?.name || "User"}!
             </h1>
           </div>
-          <p className="welcome-text">
-            {auth.user?.role === "admin"
-              ? "Here's what's happening with your store today."
-              : "Ready to process your next sale?"}
-          </p>
         </div>
         <div className="header-right">
           <div className="user-profile">
             <div className="profile-info">
-              <span className="profile-name">{auth.user?.name || "User"}</span>
               <span className="profile-role">{auth.user?.role || "staff"}</span>
             </div>
           </div>

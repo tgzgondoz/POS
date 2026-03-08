@@ -61,12 +61,8 @@ html, body {
 /* Header */
 .dashboard-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: white;
   padding: 20px 28px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 20px;
@@ -120,13 +116,11 @@ html, body {
 
 /* User Profile */
 .user-profile {
-  display: flex;
+  
   align-items: center;
   gap: 12px;
   padding: 6px 6px 6px 16px;
   background: #f8fafc;
-  border-radius: 40px;
-  border: 1.5px solid #e2e8f0;
 }
 
 .profile-info {
@@ -134,15 +128,16 @@ html, body {
 }
 
 .profile-name {
-  display: block;
+  gap: 12px;
   font-weight: 600;
+  padding: auto;
   color: #0f172a;
   font-size: 14px;
 }
 
 .profile-role {
   font-size: 12px;
-  color: #64748b;
+  color: #ff0000;
   text-transform: capitalize;
 }
 
@@ -257,6 +252,7 @@ html, body {
   border: 1px solid #e2e8f0;
   margin-bottom: 28px;
   width: 100%;
+  justify-content: center;
 }
 
 .quick-actions h2 {
@@ -272,6 +268,8 @@ html, body {
   flex-wrap: wrap;
   gap: 12px;
   width: 100%;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-card {
@@ -333,10 +331,10 @@ html, body {
 
 .reports-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  justify-items: center;
   align-items: center;
   margin-bottom: 24px;
-  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -999,7 +997,6 @@ html, body {
 
 /* Bottom Row */
 .bottom-content-row {
-  display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
   width: 100%;
@@ -1166,10 +1163,11 @@ html, body {
     padding: 32px;
     max-width: 1600px;
     margin: 0 auto;
+    justify-items: center;
   }
   
   .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
   
   .profit-leaders-grid {
@@ -1184,7 +1182,7 @@ html, body {
   }
   
   .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -1195,11 +1193,11 @@ html, body {
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
   
   .profit-leaders-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -1225,11 +1223,11 @@ html, body {
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
   
   .actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
   
   .action-card {
@@ -1254,7 +1252,7 @@ html, body {
   }
   
   .profit-leaders-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
   
   /* Table adjustments for tablet */
