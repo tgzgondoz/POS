@@ -524,6 +524,26 @@ html, body {
   animation: slideUp 0.3s ease-out;
 }
 
+/* Fix for white text in modal - ALL TEXT DARK */
+.modal,
+.modal-header,
+.modal-header h2,
+.modal-header-title,
+.modal-header-title h2,
+.product-form,
+.form-group label,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.preview-section h4,
+.preview-grid span,
+.preview-grid strong:not(.profit-amount):not(.margin-percent),
+.profit-preview h4,
+.profit-preview .preview-grid span,
+.profit-preview .preview-grid strong:not(.profit-amount):not(.margin-percent) {
+  color: #1e293b;
+}
+
 /* Modal Scrollbar */
 .modal::-webkit-scrollbar {
   width: 6px;
@@ -636,6 +656,8 @@ html, body {
   font-size: 14px;
   transition: all 0.2s;
   font-family: inherit;
+  color: #1e293b; /* Ensure input text is dark */
+  background: white;
 }
 
 .form-group input:focus,
@@ -652,10 +674,13 @@ html, body {
   border-color: #94a3b8;
 }
 
+/* Placeholder text styling */
 .form-group input::placeholder,
+.form-group select::placeholder,
 .form-group textarea::placeholder {
   color: #94a3b8;
   font-size: 13px;
+  opacity: 1;
 }
 
 .field-hint {
@@ -720,6 +745,22 @@ html, body {
 
 .margin-percent {
   color: #3b82f6 !important;
+}
+
+/* Preview Section */
+.preview-section {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.preview-section h4 {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
 }
 
 /* Form Actions */
@@ -974,6 +1015,7 @@ html, body {
   font-size: 14px;
   background: white;
   transition: all 0.2s ease;
+  color: #1e293b;
 }
 
 .report-select:hover, .date-select:hover, .date-input:hover {
@@ -1428,6 +1470,7 @@ html, body {
   .form-group textarea {
     padding: 8px 10px;
     font-size: 13px;
+    color: #1e293b;
   }
   
   .field-hint {
@@ -1636,6 +1679,7 @@ html, body {
   .form-group textarea {
     padding: 6px 8px;
     font-size: 12px;
+    color: #1e293b;
   }
   
   .field-hint {
@@ -1798,7 +1842,6 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
   }
 }
-/* Add these new styles to your existing Products.css */
 
 /* Product Name Container - for displaying name and part number together */
 .product-name-container {
@@ -1850,7 +1893,6 @@ html, body {
     font-size: 9px;
   }
 }
-/* Add to your existing Products.css */
 
 /* Loading Spinner Enhancement */
 .loading-spinner {
@@ -1990,7 +2032,6 @@ html, body {
     height: 50px;
   }
 }
-/* Add to your existing Products.css */
 
 /* Loading Screen */
 .loading-screen {
@@ -2110,6 +2151,7 @@ html, body {
     height: 25px;
   }
 }
+
 /* Pagination Controls */
 .pagination-controls {
   display: flex;
@@ -2136,6 +2178,8 @@ html, body {
   border-radius: 4px;
   font-size: 0.9rem;
   cursor: pointer;
+  color: #1e293b;
+  background: white;
 }
 
 .items-per-page-select:focus {
@@ -2202,6 +2246,7 @@ html, body {
     flex-wrap: wrap;
   }
 }
+
 /* Search Section */
 .search-section {
   margin-bottom: 24px;
@@ -2235,6 +2280,7 @@ html, body {
   transition: all 0.2s;
   background: #f8fafc;
   font-family: inherit;
+  color: #1e293b;
 }
 
 .search-input:focus {
@@ -2252,6 +2298,7 @@ html, body {
 .search-input::placeholder {
   color: #94a3b8;
   font-size: 14px;
+  opacity: 1;
 }
 
 .clear-search-btn {
