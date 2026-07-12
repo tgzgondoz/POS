@@ -128,25 +128,7 @@ const LoginScreen = ({ onLogin }) => {
             )}
           </TouchableOpacity>
 
-          <View style={styles.demoContainer}>
-            <Text style={styles.demoTitle}>Demo Credentials</Text>
-            
-            <TouchableOpacity style={styles.demoButton} onPress={demoAdmin}>
-              <View style={styles.demoRow}>
-                <Icon name="person" size={14} color="#020204" />
-                <Text style={styles.demoText}>Admin: admin@nitrogo.com</Text>
-              </View>
-              <Text style={styles.demoPassword}>Pass: Nitro@Admin2026#Secure</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.demoButton} onPress={demoStaff}>
-              <View style={styles.demoRow}>
-                <Icon name="person-outline" size={14} color="#020204" />
-                <Text style={styles.demoText}>Staff: staff@nitrogo.com</Text>
-              </View>
-              <Text style={styles.demoPassword}>Pass: Nitro@Staff2026#Strong</Text>
-            </TouchableOpacity>
-          </View>
+         
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
