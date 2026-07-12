@@ -89,7 +89,7 @@ const MainApp = () => {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0d5335" />
+          <ActivityIndicator size="large" color="#b90d0b" />
           <Text style={styles.loadingText}>Loading Eddie Tuckshop 2026...</Text>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#0b1e1c',
+    color: '#020204',
     fontWeight: '500',
   },
 });

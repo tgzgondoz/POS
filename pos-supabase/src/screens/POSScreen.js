@@ -194,7 +194,7 @@ const POSScreen = () => {
         <Text style={styles.productSku}>{item.sku || 'No SKU'}</Text>
         <Text style={styles.productPrice}>${item.sellPrice?.toFixed(2)}</Text>
         <View style={styles.stockContainer}>
-          <Icon name="cube-outline" size={10} color="#0b1e1c" />
+          <Icon name="cube-outline" size={10} color="#020204" />
           <Text style={styles.stockStatus}>{item.quantity} left</Text>
         </View>
       </View>
@@ -203,7 +203,7 @@ const POSScreen = () => {
         onPress={() => addToCart(item)}
         disabled={item.quantity === 0}
       >
-        <Icon name="add-circle" size={42} color={item.quantity === 0 ? '#ccc' : '#0d5335'} />
+        <Icon name="add-circle" size={42} color={item.quantity === 0 ? '#ccc' : '#b90d0b'} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -256,7 +256,7 @@ const POSScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-        <ActivityIndicator size="large" color="#0d5335" />
+        <ActivityIndicator size="large" color="#b90d0b" />
         <Text style={styles.loadingText}>Loading products...</Text>
       </View>
     );
@@ -268,7 +268,7 @@ const POSScreen = () => {
       
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Icon name="search" size={18} color="#0b1e1c" />
+          <Icon name="search" size={18} color="#020204" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search products..."
@@ -278,7 +278,7 @@ const POSScreen = () => {
           />
           {searchQuery !== '' && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="close-circle" size={18} color="#0b1e1c" />
+              <Icon name="close-circle" size={18} color="#020204" />
             </TouchableOpacity>
           )}
         </View>
@@ -338,7 +338,7 @@ const POSScreen = () => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="cube-outline" size={60} color="#0b1e1c" />
+            <Icon name="cube-outline" size={60} color="#020204" />
             <Text style={styles.emptyText}>No products found</Text>
           </View>
         }
@@ -394,7 +394,7 @@ const POSScreen = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Checkout</Text>
               <TouchableOpacity onPress={() => setCheckoutModal(false)}>
-                <Icon name="close" size={24} color="#0b1e1c" />
+                <Icon name="close" size={24} color="#020204" />
               </TouchableOpacity>
             </View>
             
@@ -438,21 +438,21 @@ const POSScreen = () => {
                     style={[styles.paymentMethod, paymentMethod === 'cash' && styles.paymentMethodActive]}
                     onPress={() => setPaymentMethod('cash')}
                   >
-                    <Icon name="cash-outline" size={20} color={paymentMethod === 'cash' ? '#fff' : '#0b1e1c'} />
+                    <Icon name="cash-outline" size={20} color={paymentMethod === 'cash' ? '#fff' : '#020204'} />
                     <Text style={[styles.paymentMethodText, paymentMethod === 'cash' && styles.paymentMethodTextActive]}>Cash</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.paymentMethod, paymentMethod === 'card' && styles.paymentMethodActive]}
                     onPress={() => setPaymentMethod('card')}
                   >
-                    <Icon name="card-outline" size={20} color={paymentMethod === 'card' ? '#fff' : '#0b1e1c'} />
+                    <Icon name="card-outline" size={20} color={paymentMethod === 'card' ? '#fff' : '#020204'} />
                     <Text style={[styles.paymentMethodText, paymentMethod === 'card' && styles.paymentMethodTextActive]}>Card</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.paymentMethod, paymentMethod === 'mobile' && styles.paymentMethodActive]}
                     onPress={() => setPaymentMethod('mobile')}
                   >
-                    <Icon name="phone-portrait-outline" size={20} color={paymentMethod === 'mobile' ? '#fff' : '#0b1e1c'} />
+                    <Icon name="phone-portrait-outline" size={20} color={paymentMethod === 'mobile' ? '#fff' : '#020204'} />
                     <Text style={[styles.paymentMethodText, paymentMethod === 'mobile' && styles.paymentMethodTextActive]}>Mobile</Text>
                   </TouchableOpacity>
                 </View>
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   searchContainer: {
     backgroundColor: '#fff',
@@ -549,10 +549,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   categoryChipActive: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   categoryChipText: {
-    color: '#0b1e1c',
+    color: '#020204',
     fontSize: 12,
   },
   categoryChipTextActive: {
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lowStockBadge: {
-    backgroundColor: '#0d533520',
+    backgroundColor: '#b90d0b20',
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
@@ -610,18 +610,18 @@ const styles = StyleSheet.create({
   },
   lowStockBadgeText: {
     fontSize: 8,
-    color: '#0d5335',
+    color: '#b90d0b',
     fontWeight: '600',
   },
   productSku: {
     fontSize: 9,
-    color: '#0b1e1c',
+    color: '#020204',
     marginBottom: 6,
   },
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
     marginBottom: 4,
   },
   stockContainer: {
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   stockStatus: {
     fontSize: 9,
-    color: '#0b1e1c',
+    color: '#020204',
     marginLeft: 3,
   },
   addButton: {
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   cartSubtitle: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 2,
   },
   clearCartBtn: {
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   },
   cartItemPrice: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 2,
   },
   cartItemControls: {
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
     textAlign: 'right',
     marginRight: 8,
   },
@@ -785,10 +785,10 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   checkoutButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     padding: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
   },
   orderItemName: {
     fontSize: 13,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   orderItemPrice: {
     fontSize: 13,
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
   },
   moreItems: {
     fontSize: 12,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 4,
     fontStyle: 'italic',
   },
@@ -877,7 +877,7 @@ const styles = StyleSheet.create({
   orderTotalAmount: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   modalSection: {
     marginBottom: 18,
@@ -912,11 +912,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   paymentMethodActive: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   paymentMethodText: {
     marginLeft: 6,
-    color: '#0b1e1c',
+    color: '#020204',
     fontWeight: '500',
     fontSize: 13,
   },
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   paymentInfo: {
-    backgroundColor: '#0d533510',
+    backgroundColor: '#b90d0b10',
     borderRadius: 12,
     padding: 14,
     marginTop: 8,
@@ -938,12 +938,12 @@ const styles = StyleSheet.create({
   },
   paymentInfoLabel: {
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   paymentInfoValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   changeText: {
     color: '#4caf50',
@@ -967,7 +967,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff4444',
   },
   confirmModalButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   modalButtonText: {
     color: '#fff',
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 12,
   },
 });

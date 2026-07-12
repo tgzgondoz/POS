@@ -201,18 +201,18 @@ const CategoryManagementScreen = () => {
     <View style={styles.categoryCard}>
       <View style={styles.categoryInfo}>
         <View style={styles.categoryIconContainer}>
-          <Icon name="folder-open-outline" size={24} color="#0d5335" />
+          <Icon name="folder-open-outline" size={24} color="#b90d0b" />
         </View>
         <View style={styles.categoryDetails}>
           <Text style={styles.categoryName}>{item.name}</Text>
           {item.description ? (
             <View style={styles.descriptionContainer}>
-              <Icon name="document-text-outline" size={12} color="#0b1e1c" />
+              <Icon name="document-text-outline" size={12} color="#020204" />
               <Text style={styles.categoryDescription}>{item.description}</Text>
             </View>
           ) : null}
           <View style={styles.productCountContainer}>
-            <Icon name="cube-outline" size={12} color="#0b1e1c" />
+            <Icon name="cube-outline" size={12} color="#020204" />
             <Text style={styles.productCount}>
               {productCount[item.name] || 0} product(s)
             </Text>
@@ -243,7 +243,7 @@ const CategoryManagementScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-        <ActivityIndicator size="large" color="#0d5335" />
+        <ActivityIndicator size="large" color="#b90d0b" />
         <Text style={styles.loadingText}>Loading categories...</Text>
       </View>
     );
@@ -267,19 +267,19 @@ const CategoryManagementScreen = () => {
       {/* Stats Cards */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Icon name="albums-outline" size={24} color="#0d5335" />
+          <Icon name="albums-outline" size={24} color="#b90d0b" />
           <Text style={styles.statValue}>{categories.length}</Text>
           <Text style={styles.statLabel}>Total Categories</Text>
         </View>
         <View style={styles.statCard}>
-          <Icon name="checkmark-circle-outline" size={24} color="#0d5335" />
+          <Icon name="checkmark-circle-outline" size={24} color="#b90d0b" />
           <Text style={styles.statValue}>
             {Object.keys(productCount).length}
           </Text>
           <Text style={styles.statLabel}>Active Categories</Text>
         </View>
         <View style={styles.statCard}>
-          <Icon name="cube-outline" size={24} color="#0d5335" />
+          <Icon name="cube-outline" size={24} color="#b90d0b" />
           <Text style={styles.statValue}>
             {Object.values(productCount).reduce((a, b) => a + b, 0)}
           </Text>
@@ -296,7 +296,7 @@ const CategoryManagementScreen = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="folder-open-outline" size={64} color="#0b1e1c" />
+            <Icon name="folder-open-outline" size={64} color="#020204" />
             <Text style={styles.emptyText}>No categories found</Text>
             <Text style={styles.emptySubtext}>Tap + to add your first category</Text>
           </View>
@@ -331,7 +331,7 @@ const CategoryManagementScreen = () => {
 
             <View style={styles.modalForm}>
               <View style={styles.inputContainer}>
-                <Icon name="pricetag-outline" size={16} color="#0b1e1c" />
+                <Icon name="pricetag-outline" size={16} color="#020204" />
                 <Text style={styles.label}>Category Name *</Text>
               </View>
               <TextInput
@@ -339,11 +339,11 @@ const CategoryManagementScreen = () => {
                 value={categoryName}
                 onChangeText={setCategoryName}
                 placeholder="Enter category name"
-                placeholderTextColor="#0b1e1c"
+                placeholderTextColor="#020204"
               />
 
               <View style={styles.inputContainer}>
-                <Icon name="document-text-outline" size={16} color="#0b1e1c" />
+                <Icon name="document-text-outline" size={16} color="#020204" />
                 <Text style={styles.label}>Description (Optional)</Text>
               </View>
               <TextInput
@@ -351,7 +351,7 @@ const CategoryManagementScreen = () => {
                 value={categoryDescription}
                 onChangeText={setCategoryDescription}
                 placeholder="Enter category description"
-                placeholderTextColor="#0b1e1c"
+                placeholderTextColor="#020204"
                 multiline
                 numberOfLines={3}
               />
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   fab: {
     position: 'absolute',
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
     fontWeight: '500',
   },
   listContainer: {
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   },
   categoryDescription: {
     fontSize: 12,
-    color: '#0b1e1c',
+    color: '#020204',
     flex: 1,
   },
   productCountContainer: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   productCount: {
     fontSize: 11,
-    color: '#0d5335',
+    color: '#b90d0b',
     fontWeight: '500',
   },
   categoryActions: {
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   editBtn: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   deleteBtn: {
     backgroundColor: '#ff4444',
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0b1e1c',
+    color: '#020204',
   },
   input: {
     backgroundColor: '#f8f8f8',
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 16,
   },
   emptySubtext: {

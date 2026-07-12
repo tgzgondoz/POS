@@ -178,7 +178,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
             style={[styles.actionBtn, styles.promoteBtn]}
             onPress={() => handleChangeRole(item.id, 'admin')}
           >
-            <Icon name="arrow-up" size={16} color="#0e0b05" />
+            <Icon name="arrow-up" size={16} color="#fff" />
             <Text style={styles.actionBtnText}>Promote</Text>
           </TouchableOpacity>
         )}
@@ -214,7 +214,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#0d5335" />
+        <ActivityIndicator size="large" color="#b90d0b" />
       </View>
     );
   }
@@ -244,7 +244,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>User Management</Text>
           <TouchableOpacity style={styles.addUserBtn} onPress={() => setModalVisible(true)}>
-            <Icon name="add" size={24} color="#0d5335" />
+            <Icon name="add" size={24} color="#b90d0b" />
             <Text style={styles.addUserText}>Add User</Text>
           </TouchableOpacity>
         </View>
@@ -256,7 +256,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Icon name="people" size={64} color="#0b1e1c" />
+              <Icon name="people" size={64} color="#020204" />
               <Text style={styles.emptyText}>No users found</Text>
             </View>
           }
@@ -273,7 +273,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Add New User</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Icon name="close" size={24} color="#0b1e1c" />
+                  <Icon name="close" size={24} color="#020204" />
                 </TouchableOpacity>
               </View>
               
@@ -284,7 +284,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
                   value={newUser.fullName}
                   onChangeText={(text) => setNewUser({ ...newUser, fullName: text })}
                   placeholder="Enter full name"
-                  placeholderTextColor="#0b1e1c"
+                  placeholderTextColor="#020204"
                 />
 
                 <Text style={styles.label}>Email *</Text>
@@ -293,7 +293,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
                   value={newUser.email}
                   onChangeText={(text) => setNewUser({ ...newUser, email: text })}
                   placeholder="Enter email"
-                  placeholderTextColor="#0b1e1c"
+                  placeholderTextColor="#020204"
                   autoCapitalize="none"
                   keyboardType="email-address"
                 />
@@ -304,7 +304,7 @@ const AdminDashboardScreen = ({ user, onLogout }) => {
                   value={newUser.password}
                   onChangeText={(text) => setNewUser({ ...newUser, password: text })}
                   placeholder="Enter password"
-                  placeholderTextColor="#0b1e1c"
+                  placeholderTextColor="#020204"
                   secureTextEntry
                 />
 
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
     marginBottom: 4,
   },
   adminStat: {
@@ -386,11 +386,11 @@ const styles = StyleSheet.create({
     color: '#4caf50',
   },
   activeStat: {
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   statLabel: {
     fontSize: 12,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   listHeader: {
     flexDirection: 'row',
@@ -407,13 +407,13 @@ const styles = StyleSheet.create({
   addUserBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0d533520',
+    backgroundColor: '#b90d0b20',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   addUserText: {
-    color: '#0d5335',
+    color: '#b90d0b',
     marginLeft: 4,
     fontWeight: '600',
   },
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     borderLeftWidth: 4,
-    borderLeftColor: '#0d5335',
+    borderLeftColor: '#b90d0b',
   },
   userInfo: {
     flexDirection: 'row',
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 13,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 2,
   },
   userMeta: {
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4caf5020',
   },
   inactiveBadge: {
-    backgroundColor: '#0b1e1c20',
+    backgroundColor: '#02020420',
   },
   statusText: {
     fontSize: 10,
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     color: '#4caf50',
   },
   inactiveStatusText: {
-    color: '#0b1e1c',
+    color: '#020204',
   },
   userActions: {
     flexDirection: 'row',
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   promoteBtn: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   demoteBtn: {
     backgroundColor: '#ff8800',
@@ -591,17 +591,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   roleOptionActive: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   roleOptionText: {
-    color: '#0b1e1c',
+    color: '#020204',
   },
   roleOptionTextActive: {
     color: '#fff',
     fontWeight: '600',
   },
   submitBtn: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 12,
   },
 });

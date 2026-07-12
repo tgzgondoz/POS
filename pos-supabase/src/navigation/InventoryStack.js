@@ -12,7 +12,7 @@ const InventoryStack = () => {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#0d5335',
+          backgroundColor: '#b90d0b',
           elevation: 0,
           shadowOpacity: 0,
           borderBottomWidth: 1,

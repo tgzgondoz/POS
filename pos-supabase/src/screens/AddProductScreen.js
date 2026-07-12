@@ -108,7 +108,7 @@ const AddProductScreen = ({ navigation }) => {
           value={product.name}
           onChangeText={(text) => handleInputChange('name', text)}
           placeholder="Enter product name"
-          placeholderTextColor="#0b1e1c"
+          placeholderTextColor="#020204"
         />
 
         <Text style={styles.label}>SKU</Text>
@@ -117,7 +117,7 @@ const AddProductScreen = ({ navigation }) => {
           value={product.sku}
           onChangeText={(text) => handleInputChange('sku', text)}
           placeholder="Enter SKU (optional)"
-          placeholderTextColor="#0b1e1c"
+          placeholderTextColor="#020204"
         />
 
         <View style={styles.row}>
@@ -129,7 +129,7 @@ const AddProductScreen = ({ navigation }) => {
               onChangeText={(text) => handleInputChange('price', text)}
               placeholder="0.00"
               keyboardType="decimal-pad"
-              placeholderTextColor="#0b1e1c"
+              placeholderTextColor="#020204"
             />
           </View>
           
@@ -141,17 +141,17 @@ const AddProductScreen = ({ navigation }) => {
               onChangeText={(text) => handleInputChange('cost', text)}
               placeholder="0.00"
               keyboardType="decimal-pad"
-              placeholderTextColor="#0b1e1c"
+              placeholderTextColor="#020204"
             />
           </View>
         </View>
 
         {product.price && product.cost && (
           <View style={styles.statsContainer}>
-            <Icon name="trending-up" size={16} color="#0d5335" />
+            <Icon name="trending-up" size={16} color="#b90d0b" />
             <Text style={styles.statsText}> Profit: ${calculateProfit()}</Text>
             <View style={styles.statsDivider} />
-            <Icon name="pie-chart" size={16} color="#0d5335" />
+            <Icon name="pie-chart" size={16} color="#b90d0b" />
             <Text style={styles.statsText}> Margin: {calculateMargin()}</Text>
           </View>
         )}
@@ -182,7 +182,7 @@ const AddProductScreen = ({ navigation }) => {
           onChangeText={(text) => handleInputChange('quantity', text)}
           placeholder="0"
           keyboardType="numeric"
-          placeholderTextColor="#0b1e1c"
+          placeholderTextColor="#020204"
         />
 
         <Text style={styles.label}>Supplier</Text>
@@ -191,7 +191,7 @@ const AddProductScreen = ({ navigation }) => {
           value={product.supplier}
           onChangeText={(text) => handleInputChange('supplier', text)}
           placeholder="Enter supplier name (optional)"
-          placeholderTextColor="#0b1e1c"
+          placeholderTextColor="#020204"
         />
 
         <Text style={styles.label}>Description</Text>
@@ -200,7 +200,7 @@ const AddProductScreen = ({ navigation }) => {
           value={product.description}
           onChangeText={(text) => handleInputChange('description', text)}
           placeholder="Enter product description (optional)"
-          placeholderTextColor="#0b1e1c"
+          placeholderTextColor="#020204"
           multiline
           numberOfLines={4}
         />
@@ -273,17 +273,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryButtonActive: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   categoryButtonText: {
-    color: '#0b1e1c',
+    color: '#020204',
   },
   categoryButtonTextActive: {
     color: '#fff',
     fontWeight: '600',
   },
   statsContainer: {
-    backgroundColor: '#0d533510',
+    backgroundColor: '#b90d0b10',
     padding: 12,
     borderRadius: 8,
     marginVertical: 8,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   statsText: {
     fontSize: 14,
-    color: '#0d5335',
+    color: '#b90d0b',
     fontWeight: '600',
     marginVertical: 2,
     marginRight: 12,
@@ -301,11 +301,11 @@ const styles = StyleSheet.create({
   statsDivider: {
     width: 1,
     height: 20,
-    backgroundColor: '#0d533530',
+    backgroundColor: '#b90d0b30',
     marginHorizontal: 8,
   },
   submitButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

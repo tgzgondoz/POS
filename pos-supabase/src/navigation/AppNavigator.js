@@ -42,8 +42,8 @@ const AppNavigator = ({ onLogout }) => {
           }
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0d5335',
-        tabBarInactiveTintColor: '#0b1e1c',
+        tabBarActiveTintColor: '#b90d0b',
+        tabBarInactiveTintColor: '#020204',
         tabBarStyle: {
           height: 60,
           paddingBottom: 8,
@@ -72,7 +72,7 @@ const AppNavigator = ({ onLogout }) => {
               style={{ width: 32, height: 32, borderRadius: 16 }}
               resizeMode="contain"
             />
-            <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#0b1e1c' }}>
+            <Text style={{ marginLeft: 8, fontSize: 14, fontWeight: '600', color: '#020204' }}>
               POS
             </Text>
           </View>

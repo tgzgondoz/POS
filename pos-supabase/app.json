@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Eddie Garage Services POS",
-    "slug": "eddie-garage-services-pos",
+    "name": "NitroGo POS",
+    "slug": "nitrogo-pos",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.eddiegarage.pos"
+      "bundleIdentifier": "com.nitrogo.pos"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#fec82b"
       },
-      "package": "com.eddiegarage.pos",
+      "package": "com.nitrogo.pos",
       "permissions": [
         "android.permission.INTERNET"
       ]

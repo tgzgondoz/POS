@@ -59,7 +59,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Icon name="cube" size={24} color="#0d5335" />
+          <Icon name="cube" size={24} color="#b90d0b" />
           <Text style={styles.productName}>{currentProduct.name}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
@@ -69,7 +69,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
 
       <View style={styles.infoCard}>
         <View style={styles.sectionHeader}>
-          <Icon name="information-circle" size={20} color="#0d5335" />
+          <Icon name="information-circle" size={20} color="#b90d0b" />
           <Text style={styles.sectionTitle}> Product Information</Text>
         </View>
         <View style={styles.infoRow}>
@@ -92,7 +92,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
 
       <View style={styles.infoCard}>
         <View style={styles.sectionHeader}>
-          <Icon name="cash" size={20} color="#0d5335" />
+          <Icon name="cash" size={20} color="#b90d0b" />
           <Text style={styles.sectionTitle}> Pricing Information</Text>
         </View>
         <View style={styles.infoRow}>
@@ -115,7 +115,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
 
       <View style={styles.infoCard}>
         <View style={styles.sectionHeader}>
-          <Icon name="cube-outline" size={20} color="#0d5335" />
+          <Icon name="cube-outline" size={20} color="#b90d0b" />
           <Text style={styles.sectionTitle}> Inventory Information</Text>
         </View>
         <View style={styles.infoRow}>
@@ -143,7 +143,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       {transactions.length > 0 && (
         <View style={styles.infoCard}>
           <View style={styles.sectionHeader}>
-            <Icon name="time" size={20} color="#0d5335" />
+            <Icon name="time" size={20} color="#b90d0b" />
             <Text style={styles.sectionTitle}> Recent Transactions</Text>
           </View>
           {transactions.slice(0, 5).map((transaction, index) => (
@@ -178,7 +178,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Icon name="add-circle" size={24} color="#0d5335" />
+              <Icon name="add-circle" size={24} color="#b90d0b" />
               <Text style={styles.modalTitle}>Restock Product</Text>
             </View>
             <Text style={styles.modalSubtitle}>{currentProduct.name}</Text>
@@ -189,7 +189,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
               keyboardType="numeric"
               value={restockQuantity}
               onChangeText={setRestockQuantity}
-              placeholderTextColor="#0b1e1c"
+              placeholderTextColor="#020204"
               autoFocus={true}
             />
             
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderLeftWidth: 4,
-    borderLeftColor: '#0d5335',
+    borderLeftColor: '#b90d0b',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   value: {
     fontSize: 14,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   price: {
-    color: '#0d5335',
+    color: '#b90d0b',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -307,10 +307,10 @@ const styles = StyleSheet.create({
   quantity: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   restockButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     margin: 16,
     padding: 16,
     borderRadius: 12,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   },
   transactionDate: {
     fontSize: 12,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   modalContainer: {
     flex: 1,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
     marginBottom: 20,
   },
   modalInput: {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff4444',
   },
   confirmButton: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   confirmButtonText: {
     color: '#fff',

@@ -120,17 +120,17 @@ const SalesHistoryScreen = () => {
       >
         <View style={styles.saleHeader}>
           <View style={styles.saleIdContainer}>
-            <Icon name="receipt-outline" size={12} color="#0b1e1c" />
+            <Icon name="receipt-outline" size={12} color="#020204" />
             <Text style={styles.saleId}>#{item.id?.slice(-8)}</Text>
           </View>
           <View style={styles.saleDateContainer}>
-            <Icon name="time-outline" size={10} color="#0b1e1c" />
+            <Icon name="time-outline" size={10} color="#020204" />
             <Text style={styles.saleDate}>{moment(item.timestamp).format('MM/DD/YY h:mm A')}</Text>
           </View>
         </View>
         
         <View style={styles.customerContainer}>
-          <Icon name="person-outline" size={12} color="#0b1e1c" />
+          <Icon name="person-outline" size={12} color="#020204" />
           <Text style={styles.saleCustomer}>{item.customerName || 'Walk-in Customer'}</Text>
         </View>
         
@@ -186,25 +186,25 @@ const SalesHistoryScreen = () => {
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.detailSection}>
               <View style={styles.detailRow}>
-                <Icon name="pricetag-outline" size={14} color="#0b1e1c" />
+                <Icon name="pricetag-outline" size={14} color="#020204" />
                 <Text style={styles.detailLabel}>Sale ID</Text>
               </View>
               <Text style={styles.detailValue}>{selectedSale?.id}</Text>
               
               <View style={styles.detailRow}>
-                <Icon name="calendar-outline" size={14} color="#0b1e1c" />
+                <Icon name="calendar-outline" size={14} color="#020204" />
                 <Text style={styles.detailLabel}>Date & Time</Text>
               </View>
               <Text style={styles.detailValue}>{moment(selectedSale?.timestamp).format('MMMM Do YYYY, h:mm:ss a')}</Text>
               
               <View style={styles.detailRow}>
-                <Icon name="person-outline" size={14} color="#0b1e1c" />
+                <Icon name="person-outline" size={14} color="#020204" />
                 <Text style={styles.detailLabel}>Customer</Text>
               </View>
               <Text style={styles.detailValue}>{selectedSale?.customerName || 'Walk-in Customer'}</Text>
               
               <View style={styles.detailRow}>
-                <Icon name="card-outline" size={14} color="#0b1e1c" />
+                <Icon name="card-outline" size={14} color="#020204" />
                 <Text style={styles.detailLabel}>Payment Method</Text>
               </View>
               <Text style={styles.detailValue}>{selectedSale?.paymentMethod?.toUpperCase()}</Text>
@@ -212,7 +212,7 @@ const SalesHistoryScreen = () => {
             
             <View style={styles.detailSection}>
               <View style={styles.sectionHeader}>
-                <Icon name="cube-outline" size={16} color="#0d5335" />
+                <Icon name="cube-outline" size={16} color="#b90d0b" />
                 <Text style={styles.sectionTitle}>Items</Text>
               </View>
               {selectedSale?.items?.map((item, index) => {
@@ -222,7 +222,7 @@ const SalesHistoryScreen = () => {
                     <View style={styles.itemInfo}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       <View style={styles.itemPriceContainer}>
-                        <Icon name="cash-outline" size={10} color="#0b1e1c" />
+                        <Icon name="cash-outline" size={10} color="#020204" />
                         <Text style={styles.itemPrice}>
                           {formatCurrency(item.sellPrice)} × {item.quantity}
                         </Text>
@@ -279,7 +279,7 @@ const SalesHistoryScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-        <ActivityIndicator size="large" color="#0d5335" />
+        <ActivityIndicator size="large" color="#b90d0b" />
         <Text style={styles.loadingText}>Loading sales history...</Text>
       </View>
     );
@@ -302,14 +302,14 @@ const SalesHistoryScreen = () => {
           <Text style={styles.miniHeaderTitle}>Sales</Text>
         </View>
         <View style={styles.miniHeaderDateContainer}>
-          <Icon name="calendar-outline" size={12} color="#0b1e1c" />
+          <Icon name="calendar-outline" size={12} color="#020204" />
           <Text style={styles.miniHeaderDate}>{moment().format('MMM DD, YYYY')}</Text>
         </View>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
         <View style={styles.statCard}>
-          <Icon name="cash-outline" size={20} color="#0d5335" />
+          <Icon name="cash-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{formatCurrency(totalRevenue)}</Text>
           <Text style={styles.statLabel}>Revenue</Text>
         </View>
@@ -321,13 +321,13 @@ const SalesHistoryScreen = () => {
         </View>
         
         <View style={styles.statCard}>
-          <Icon name="cart-outline" size={20} color="#0d5335" />
+          <Icon name="cart-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{totalTransactions}</Text>
           <Text style={styles.statLabel}>Sales</Text>
         </View>
         
         <View style={styles.statCard}>
-          <Icon name="stats-chart-outline" size={20} color="#0d5335" />
+          <Icon name="stats-chart-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{formatCurrency(averageOrder)}</Text>
           <Text style={styles.statLabel}>Average</Text>
         </View>
@@ -338,28 +338,28 @@ const SalesHistoryScreen = () => {
           style={[styles.filterButton, filter === 'today' && styles.filterButtonActive]}
           onPress={() => setFilter('today')}
         >
-          <Icon name="today-outline" size={12} color={filter === 'today' ? "#fff" : "#0b1e1c"} />
+          <Icon name="today-outline" size={12} color={filter === 'today' ? "#fff" : "#020204"} />
           <Text style={[styles.filterText, filter === 'today' && styles.filterTextActive]}>Today</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterButton, filter === 'week' && styles.filterButtonActive]}
           onPress={() => setFilter('week')}
         >
-          <Icon name="calendar-outline" size={12} color={filter === 'week' ? "#fff" : "#0b1e1c"} />
+          <Icon name="calendar-outline" size={12} color={filter === 'week' ? "#fff" : "#020204"} />
           <Text style={[styles.filterText, filter === 'week' && styles.filterTextActive]}>Week</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterButton, filter === 'month' && styles.filterButtonActive]}
           onPress={() => setFilter('month')}
         >
-          <Icon name="calendar-number-outline" size={12} color={filter === 'month' ? "#fff" : "#0b1e1c"} />
+          <Icon name="calendar-number-outline" size={12} color={filter === 'month' ? "#fff" : "#020204"} />
           <Text style={[styles.filterText, filter === 'month' && styles.filterTextActive]}>Month</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
           onPress={() => setFilter('all')}
         >
-          <Icon name="list-outline" size={12} color={filter === 'all' ? "#fff" : "#0b1e1c"} />
+          <Icon name="list-outline" size={12} color={filter === 'all' ? "#fff" : "#020204"} />
           <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
         </TouchableOpacity>
       </View>
@@ -373,7 +373,7 @@ const SalesHistoryScreen = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="receipt-outline" size={64} color="#0b1e1c" />
+            <Icon name="receipt-outline" size={64} color="#020204" />
             <Text style={styles.emptyText}>No sales found</Text>
             <Text style={styles.emptySubtext}>
               {filter === 'today' ? 'No sales today' : 
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   miniHeader: {
     paddingHorizontal: 20,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
   },
   miniHeaderDate: {
     fontSize: 12,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   statsScroll: {
     paddingHorizontal: 12,
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 10,
-    color: '#0b1e1c',
+    color: '#020204',
     fontWeight: '500',
   },
   filterContainer: {
@@ -476,10 +476,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   filterButtonActive: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   filterText: {
-    color: '#0b1e1c',
+    color: '#020204',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -487,21 +487,21 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   topProductBanner: {
-    backgroundColor: '#0d533510',
+    backgroundColor: '#b90d0b10',
     marginHorizontal: 16,
     marginBottom: 10,
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#0d533530',
+    borderColor: '#b90d0b30',
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
   },
   topProductText: {
     fontSize: 12,
-    color: '#0d5335',
+    color: '#b90d0b',
     fontWeight: '500',
   },
   listContainer: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   },
   saleId: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   saleDateContainer: {
     flexDirection: 'row',
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   saleTotal: {
     fontSize: 17,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   profitContainer: {
     flexDirection: 'row',
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4caf50',
   },
   cardBadge: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
   },
   mobileBadge: {
     backgroundColor: '#ff9800',
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   detailValue: {
     fontSize: 13,
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   itemProfitContainer: {
     flexDirection: 'row',
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   itemTotal: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   totalDetailRow: {
     flexDirection: 'row',
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   },
   totalDetailLabel: {
     fontSize: 13,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   totalDetailValue: {
     fontSize: 13,
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   grandTotalDetailValue: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#0d5335',
+    color: '#b90d0b',
   },
   changeText: {
     color: '#4caf50',
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 16,
   },
   emptySubtext: {

@@ -73,7 +73,7 @@ const InventoryScreen = ({ navigation }) => {
   const getStockStatus = (quantity) => {
     if (quantity <= 0) return { label: 'Out of Stock', color: '#ff4444', icon: 'close-circle', bgColor: '#ff444420' };
     if (quantity < 10) return { label: 'Critical', color: '#ff8800', icon: 'alert-circle', bgColor: '#ff880020' };
-    if (quantity < 50) return { label: 'Normal', color: '#0d5335', icon: 'checkmark-circle', bgColor: '#0d533520' };
+    if (quantity < 50) return { label: 'Normal', color: '#b90d0b', icon: 'checkmark-circle', bgColor: '#b90d0b20' };
     return { label: 'Good', color: '#4caf50', icon: 'checkmark-done-circle', bgColor: '#4caf5020' };
   };
 
@@ -150,7 +150,7 @@ const InventoryScreen = ({ navigation }) => {
               <Text style={styles.itemCategory}>{item.category || 'Uncategorized'}</Text>
             </View>
             <View style={styles.itemPriceRow}>
-              <Icon name="cart-outline" size={10} color="#0b1e1c" />
+              <Icon name="cart-outline" size={10} color="#020204" />
               <Text style={styles.itemPriceInfo}>
                 Cost: {formatCurrency(costPrice)} | Sell: {formatCurrency(sellPrice)}
               </Text>
@@ -191,7 +191,7 @@ const InventoryScreen = ({ navigation }) => {
     return (
       <View style={styles.centerContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-        <ActivityIndicator size="large" color="#0d5335" />
+        <ActivityIndicator size="large" color="#b90d0b" />
         <Text style={styles.loadingText}>Loading inventory...</Text>
       </View>
     );
@@ -205,17 +205,17 @@ const InventoryScreen = ({ navigation }) => {
       
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
         <View style={styles.statCard}>
-          <Icon name="cube-outline" size={20} color="#0d5335" />
+          <Icon name="cube-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{stats.totalProducts}</Text>
           <Text style={styles.statLabel}>Total Products</Text>
         </View>
         <View style={styles.statCard}>
-          <Icon name="cash-outline" size={20} color="#0d5335" />
+          <Icon name="cash-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{formatCurrency(stats.totalValue)}</Text>
           <Text style={styles.statLabel}>Inventory Value</Text>
         </View>
         <View style={styles.statCard}>
-          <Icon name="card-outline" size={20} color="#0d5335" />
+          <Icon name="card-outline" size={20} color="#b90d0b" />
           <Text style={styles.statValue}>{formatCurrency(stats.totalRetailValue)}</Text>
           <Text style={styles.statLabel}>Retail Value</Text>
         </View>
@@ -248,7 +248,7 @@ const InventoryScreen = ({ navigation }) => {
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <View style={styles.listHeaderLeft}>
-              <Icon name="list-outline" size={20} color="#0d5335" />
+              <Icon name="list-outline" size={20} color="#b90d0b" />
               <View>
                 <Text style={styles.listHeaderTitle}>Inventory List</Text>
                 <Text style={styles.listHeaderSubtitle}>
@@ -257,13 +257,13 @@ const InventoryScreen = ({ navigation }) => {
               </View>
             </View>
             <TouchableOpacity style={styles.refreshButton} onPress={loadProducts}>
-              <Icon name="refresh-outline" size={18} color="#0b1e1c" />
+              <Icon name="refresh-outline" size={18} color="#020204" />
             </TouchableOpacity>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="cube-outline" size={64} color="#0b1e1c" />
+            <Icon name="cube-outline" size={64} color="#020204" />
             <Text style={styles.emptyText}>No products in inventory</Text>
             <Text style={styles.emptySubtext}>Add products to see them here</Text>
           </View>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   statsScroll: {
     backgroundColor: '#fff',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 10,
-    color: '#0b1e1c',
+    color: '#020204',
     fontWeight: '500',
   },
   warning: {
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   listHeaderSubtitle: {
     fontSize: 11,
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 2,
   },
   refreshButton: {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   },
   itemCategory: {
     fontSize: 11,
-    color: '#0d5335',
+    color: '#b90d0b',
     fontWeight: '500',
   },
   itemPriceRow: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   },
   itemPriceInfo: {
     fontSize: 10,
-    color: '#0b1e1c',
+    color: '#020204',
   },
   itemStatus: {
     alignItems: 'flex-end',
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0b1e1c',
+    color: '#020204',
     marginTop: 16,
   },
   emptySubtext: {

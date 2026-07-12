@@ -11,7 +11,7 @@ const RestrictedScreen = ({ navigation, screenName }) => {
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        <Icon name="lock-closed" size={80} color="#0d5335" />
+        <Icon name="lock-closed" size={80} color="#b90d0b" />
       </View>
       <Text style={styles.title}>Access Restricted</Text>
       <Text style={styles.message}>
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#0d533520',
+    backgroundColor: '#b90d0b20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -54,14 +54,14 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#0b1e1c',
+    color: '#020204',
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 24,
     paddingHorizontal: 20,
   },
   button: {
-    backgroundColor: '#0d5335',
+    backgroundColor: '#b90d0b',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
