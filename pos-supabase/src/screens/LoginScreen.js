@@ -55,13 +55,13 @@ const LoginScreen = ({ onLogin }) => {
   };
 
   const demoAdmin = () => {
-    setEmail('admin@eddietuckshop.com');
-    setPassword('Eddie@Admin2026#Secure');
+    setEmail('admin@nitrogo.com');
+    setPassword('Nitro@Admin2026#Secure');
   };
 
-  const demoCashier = () => {
-    setEmail('staff@eddietuckshop.com');
-    setPassword('Eddie@Staff2026#Strong');
+  const demoStaff = () => {
+    setEmail('staff@nitrogo.com');
+    setPassword('Nitro@Staff2026#Strong');
   };
 
   return (
@@ -83,7 +83,7 @@ const LoginScreen = ({ onLogin }) => {
               <Icon name="storefront" size={60} color="#b90d0b" />
             </View>
           )}
-          <Text style={styles.title}>EDDIE GARAGE</Text>
+          <Text style={styles.title}>NITRO GO</Text>
           <Text style={styles.subtitle}>Point of Sale System</Text>
         </View>
 
@@ -134,17 +134,17 @@ const LoginScreen = ({ onLogin }) => {
             <TouchableOpacity style={styles.demoButton} onPress={demoAdmin}>
               <View style={styles.demoRow}>
                 <Icon name="person" size={14} color="#020204" />
-                <Text style={styles.demoText}>Admin: admin@eddietuckshop.com</Text>
+                <Text style={styles.demoText}>Admin: admin@nitrogo.com</Text>
               </View>
-              <Text style={styles.demoPassword}>Pass: Eddie@Admin2026#Secure</Text>
+              <Text style={styles.demoPassword}>Pass: Nitro@Admin2026#Secure</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.demoButton} onPress={demoCashier}>
+            <TouchableOpacity style={styles.demoButton} onPress={demoStaff}>
               <View style={styles.demoRow}>
                 <Icon name="person-outline" size={14} color="#020204" />
-                <Text style={styles.demoText}>Staff: staff@eddietuckshop.com</Text>
+                <Text style={styles.demoText}>Staff: staff@nitrogo.com</Text>
               </View>
-              <Text style={styles.demoPassword}>Pass: Eddie@Staff2026#Strong</Text>
+              <Text style={styles.demoPassword}>Pass: Nitro@Staff2026#Strong</Text>
             </TouchableOpacity>
           </View>
         </View>

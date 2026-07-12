@@ -3,14 +3,14 @@ import { getDatabase, ref, set, push, onValue, remove, update } from 'firebase/d
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAaM4MsPxBOCcSdiU_4xYotxB1dHAas2pY",
-  authDomain: "eddiesgaragepos.firebaseapp.com",
-  projectId: "eddiesgaragepos",
-  storageBucket: "eddiesgaragepos.firebasestorage.app",
-  messagingSenderId: "1089907198908",
-  appId: "1:1089907198908:web:22259f21c4fc52c6b439b9",
-  measurementId: "G-S04E1M17FV",
-  databaseURL: "https://eddiesgaragepos-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyCu6tY5bP-rfuHCQnV2wJyYs9gATloxEY8",
+  authDomain: "nitrogopos.firebaseapp.com",
+  databaseURL: "https://nitrogopos-default-rtdb.firebaseio.com",
+  projectId: "nitrogopos",
+  storageBucket: "nitrogopos.firebasestorage.app",
+  messagingSenderId: "222524538533",
+  appId: "1:222524538533:web:7d52045eb768582571d74c",
+  measurementId: "G-93B8P5DJQ2"
 };
 
 let app = null;

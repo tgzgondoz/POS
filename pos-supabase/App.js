@@ -14,30 +14,30 @@ import LoginScreen from './src/screens/LoginScreen';
 import { initializeFirebase } from './src/config/firebase';
 import AuthService from './src/services/AuthService';
 
-// Initialize default admin and cashier users with strong passwords for Eddie Tuckshop 2026
+// Initialize default admin and cashier users with strong passwords for NitroGo 2026
 const initializeDefaultUsers = async () => {
   try {
     const users = await AuthService.getUsers();
     if (users.length === 0) {
-      console.log('Creating default users for Eddie Tuckshop...');
+      console.log('Creating default users for NitroGo...');
       // Create default admin with strong password for 2026
-      await AuthService.registerUser('admin@eddietuckshop.com', 'Eddie@Admin2026#Secure', 'Eddie Admin', 'admin');
+      await AuthService.registerUser('admin@nitrogo.com', 'Nitro@Admin2026#Secure', 'NitroGo Admin', 'admin');
       // Create default cashier with strong password for 2026
-      await AuthService.registerUser('staff@eddietuckshop.com', 'Eddie@Staff2026#Strong', 'Eddie Staff', 'cashier');
-      console.log('Default Eddie Tuckshop users created successfully for 2026');
+      await AuthService.registerUser('staff@nitrogo.com', 'Nitro@Staff2026#Strong', 'NitroGo Staff', 'cashier');
+      console.log('Default NitroGo users created successfully for 2026');
     } else {
       // Check if default users exist, if not create them
-      const adminExists = users.some(user => user.email === 'admin@eddietuckshop.com');
-      const staffExists = users.some(user => user.email === 'staff@eddietuckshop.com');
+      const adminExists = users.some(user => user.email === 'admin@nitrogo.com');
+      const staffExists = users.some(user => user.email === 'staff@nitrogo.com');
       
       if (!adminExists) {
         console.log('Creating missing admin user...');
-        await AuthService.registerUser('admin@eddietuckshop.com', 'Eddie@Admin2026#Secure', 'Eddie Admin', 'admin');
+        await AuthService.registerUser('admin@nitrogo.com', 'Nitro@Admin2026#Secure', 'NitroGo Admin', 'admin');
       }
       
       if (!staffExists) {
         console.log('Creating missing staff user...');
-        await AuthService.registerUser('staff@eddietuckshop.com', 'Eddie@Staff2026#Strong', 'Eddie Staff', 'cashier');
+        await AuthService.registerUser('staff@nitrogo.com', 'Nitro@Staff2026#Strong', 'NitroGo Staff', 'cashier');
       }
     }
   } catch (error) {
@@ -90,7 +90,7 @@ const MainApp = () => {
       <SafeAreaProvider>
         <SafeAreaView style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#b90d0b" />
-          <Text style={styles.loadingText}>Loading Eddie Tuckshop 2026...</Text>
+          <Text style={styles.loadingText}>Loading NitroGo 2026...</Text>
         </SafeAreaView>
       </SafeAreaProvider>
     );
