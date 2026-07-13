@@ -9,7 +9,8 @@ import {
   Alert,
   TextInput,
   RefreshControl,
-  ScrollView
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ProductService from '../services/ProductService';
@@ -65,7 +66,7 @@ const ProductListScreen = ({ navigation }) => {
   const handleDeleteProduct = (productId, productName) => {
     Alert.alert(
       'Delete Product',
-      `Are you sure you want to delete ${productName}?`,
+      `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -112,10 +113,20 @@ const ProductListScreen = ({ navigation }) => {
     );
   };
 
+  const getStockStatus = (quantity) => {
+    if (quantity <= 0) return { label: 'Out of Stock', color: '#EF4444' };
+    if (quantity < 10) return { label: 'Low Stock', color: '#F59E0B' };
+    if (quantity < 50) return { label: 'In Stock', color: '#10B981' };
+    return { label: 'Well Stocked', color: '#059669' };
+  };
+
+  const formatCurrency = (amount) => {
+    return `$${amount?.toFixed(2) || '0.00'}`;
+  };
+
   const renderProduct = ({ item }) => {
-    const status = ProductService.getInventoryStatus(item.quantity);
-    const statusColor = ProductService.getStatusColor(status);
-    const profit = ProductService.calculateProfit(item);
+    const status = getStockStatus(item.quantity);
+    const profit = (item.sellPrice || 0) - (item.buyPrice || 0);
     
     return (
       <TouchableOpacity
@@ -125,31 +136,43 @@ const ProductListScreen = ({ navigation }) => {
       >
         <View style={styles.productHeader}>
           <View style={styles.productTitleContainer}>
-            <Icon name="cube" size={18} color="#b90d0b" />
+            <View style={styles.productIconContainer}>
+              <Icon name="cube-outline" size={20} color="#B90D0B" />
+            </View>
             <Text style={styles.productName}>{item.name}</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.status, { color: statusColor }]}>
-              {status}
+          <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
+            <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+            <Text style={[styles.statusText, { color: status.color }]}>
+              {status.label}
             </Text>
           </View>
         </View>
         
-        <Text style={styles.productSku}>SKU: {item.sku || 'N/A'}</Text>
+        <View style={styles.productSkuContainer}>
+          <Icon name="document-text-outline" size={14} color="#9CA3AF" />
+          <Text style={styles.productSku}>
+            Product Description: {item.sku || 'N/A'}
+          </Text>
+        </View>
         
         <View style={styles.productDetails}>
-          <View>
+          <View style={styles.priceSection}>
             <Text style={styles.priceLabel}>Selling Price</Text>
-            <Text style={styles.price}>${item.sellPrice?.toFixed(2)}</Text>
-            <Text style={styles.costText}>Cost: ${item.buyPrice?.toFixed(2)}</Text>
+            <Text style={styles.price}>{formatCurrency(item.sellPrice)}</Text>
+            <View style={styles.costContainer}>
+              <Icon name="cart-outline" size={12} color="#6B7280" />
+              <Text style={styles.costText}>Cost: {formatCurrency(item.buyPrice)}</Text>
+            </View>
           </View>
           
           <View style={styles.rightDetails}>
-            <Text style={styles.quantityLabel}>Quantity</Text>
+            <Text style={styles.quantityLabel}>Stock</Text>
             <Text style={styles.quantity}>{item.quantity || 0}</Text>
-            <Text style={styles.profitText}>
-              Profit: ${profit.toFixed(2)}
-            </Text>
+            <View style={styles.profitContainer}>
+              <Icon name="trending-up" size={12} color="#10B981" />
+              <Text style={styles.profitText}>Profit: {formatCurrency(profit)}</Text>
+            </View>
           </View>
         </View>
         
@@ -158,7 +181,7 @@ const ProductListScreen = ({ navigation }) => {
             style={[styles.actionButton, styles.restockButton]}
             onPress={() => handleRestock(item)}
           >
-            <Icon name="add-circle" size={16} color="#fff" />
+            <Icon name="add-circle-outline" size={18} color="#FFFFFF" />
             <Text style={styles.restockButtonText}>Restock</Text>
           </TouchableOpacity>
           
@@ -166,7 +189,7 @@ const ProductListScreen = ({ navigation }) => {
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeleteProduct(item.id, item.name)}
           >
-            <Icon name="trash-bin" size={16} color="#fff" />
+            <Icon name="trash-outline" size={18} color="#FFFFFF" />
             <Text style={styles.deleteButtonText}>Delete</Text>
           </TouchableOpacity>
         </View>
@@ -179,69 +202,100 @@ const ProductListScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#b90d0b" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
+        <ActivityIndicator size="large" color="#B90D0B" />
+        <Text style={styles.loadingText}>Loading products...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
+      
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Products</Text>
+        <Text style={styles.headerSubtitle}>
+          {filteredProducts.length} products available
+        </Text>
+      </View>
+
       <View style={styles.searchContainer}>
-        <Icon name="search" size={18} color="#020204" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search products..."
-          placeholderTextColor="#020204"
-          value={searchQuery}
-          onChangeText={handleSearch}
-        />
-        {searchQuery !== '' && (
-          <TouchableOpacity onPress={() => handleSearch('')}>
-            <Icon name="close-circle" size={18} color="#020204" />
-          </TouchableOpacity>
-        )}
+        <View style={styles.searchBar}>
+          <Icon name="search-outline" size={20} color="#9CA3AF" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search products..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => handleSearch('')}>
+              <Icon name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
       
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-        {categories.map(category => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryChip,
-              selectedCategory === category && styles.categoryChipActive
-            ]}
-            onPress={() => handleCategoryFilter(category)}
-          >
-            <Text style={[
-              styles.categoryChipText,
-              selectedCategory === category && styles.categoryChipTextActive
-            ]}>{category}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.categorySection}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.categoryScroll}
+          contentContainerStyle={styles.categoryScrollContent}
+        >
+          {categories.map(category => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryChip,
+                selectedCategory === category && styles.categoryChipActive
+              ]}
+              onPress={() => handleCategoryFilter(category)}
+            >
+              <Text style={[
+                styles.categoryChipText,
+                selectedCategory === category && styles.categoryChipTextActive
+              ]}>{category}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
       
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={loadProducts} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={loadProducts}
+            colors={['#B90D0B']}
+            tintColor="#B90D0B"
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="cube-outline" size={64} color="#020204" />
+            <View style={styles.emptyIconContainer}>
+              <Icon name="cube-outline" size={64} color="#D1D5DB" />
+            </View>
             <Text style={styles.emptyText}>No products found</Text>
-            <Text style={styles.emptySubtext}>Tap + to add your first product</Text>
+            <Text style={styles.emptySubtext}>
+              {searchQuery ? 'Try adjusting your search or filters' : 'Tap + to add your first product'}
+            </Text>
           </View>
         }
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
       
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('AddProduct')}
+        activeOpacity={0.8}
       >
-        <Icon name="add" size={32} color="#fff" />
+        <Icon name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
@@ -250,70 +304,109 @@ const ProductListScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F3F4F6',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 2,
   },
   searchContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  searchIcon: {
-    marginRight: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#0e0b05',
-  },
-  categoryScroll: {
-    backgroundColor: '#fff',
     paddingVertical: 12,
     paddingHorizontal: 8,
+    fontSize: 15,
+    color: '#111827',
+  },
+  categorySection: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  categoryScroll: {
+    paddingVertical: 8,
+  },
+  categoryScrollContent: {
+    paddingHorizontal: 16,
   },
   categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 4,
+    backgroundColor: '#F3F4F6',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   categoryChipActive: {
-    backgroundColor: '#b90d0b',
+    backgroundColor: '#B90D0B',
+    borderColor: '#B90D0B',
   },
   categoryChipText: {
-    color: '#020204',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#374151',
   },
   categoryChipTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#FFFFFF',
   },
   listContainer: {
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 80,
   },
   productCard: {
-    backgroundColor: '#fff',
-    margin: 16,
-    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
     padding: 16,
     borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#0e0b05',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    borderLeftWidth: 4,
-    borderLeftColor: '#b90d0b',
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   productHeader: {
     flexDirection: 'row',
@@ -326,127 +419,173 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  productIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#B90D0B10',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
   productName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0e0b05',
-    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
     flex: 1,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    gap: 4,
   },
-  status: {
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
     fontSize: 11,
     fontWeight: '600',
   },
+  productSkuContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+    paddingLeft: 46,
+  },
   productSku: {
     fontSize: 12,
-    color: '#020204',
-    marginBottom: 12,
-    marginLeft: 26,
+    color: '#6B7280',
   },
   productDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingLeft: 46,
     marginBottom: 16,
-    marginLeft: 26,
+  },
+  priceSection: {
+    flex: 1,
   },
   priceLabel: {
-    fontSize: 11,
-    color: '#020204',
+    fontSize: 12,
+    color: '#6B7280',
     marginBottom: 2,
   },
   price: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#b90d0b',
+    fontWeight: '700',
+    color: '#B90D0B',
+  },
+  costContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   costText: {
-    fontSize: 11,
-    color: '#020204',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#6B7280',
   },
   rightDetails: {
     alignItems: 'flex-end',
   },
   quantityLabel: {
-    fontSize: 11,
-    color: '#020204',
+    fontSize: 12,
+    color: '#6B7280',
     marginBottom: 2,
   },
   quantity: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#b90d0b',
+    fontWeight: '700',
+    color: '#111827',
+  },
+  profitContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   profitText: {
-    fontSize: 11,
-    color: '#4caf50',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#10B981',
+    fontWeight: '500',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginLeft: 26,
+    gap: 8,
+    paddingLeft: 46,
   },
   actionButton: {
     flex: 1,
     padding: 10,
     borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 4,
     flexDirection: 'row',
     justifyContent: 'center',
+    gap: 6,
   },
   restockButton: {
-    backgroundColor: '#b90d0b',
+    backgroundColor: '#B90D0B',
   },
   restockButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 13,
   },
   deleteButton: {
-    backgroundColor: '#ff4444',
+    backgroundColor: '#EF4444',
   },
   deleteButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 13,
   },
   fab: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#b90d0b',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#B90D0B',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-    shadowColor: '#0e0b05',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowColor: '#B90D0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 100,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
+    paddingTop: 80,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
-    color: '#020204',
-    marginTop: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#9CA3AF',
     marginTop: 8,
   },
 });
