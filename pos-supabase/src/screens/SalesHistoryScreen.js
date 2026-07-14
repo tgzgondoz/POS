@@ -356,7 +356,6 @@ const SalesHistoryScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Sales History</Text>
           <Text style={styles.headerSubtitle}>
             {filteredSales.length} transactions • {formatCurrency(totalRevenue)} revenue
           </Text>

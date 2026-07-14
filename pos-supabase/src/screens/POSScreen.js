@@ -305,12 +305,7 @@ const POSScreen = () => {
       
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Point of Sale</Text>
-          <View style={styles.headerBadge}>
-            <Icon name="cash-outline" size={20} color="#B90D0B" />
-          </View>
-        </View>
+        
 
         {/* Search and Categories */}
         <View style={styles.searchContainer}>

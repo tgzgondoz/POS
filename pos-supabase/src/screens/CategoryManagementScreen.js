@@ -278,7 +278,7 @@ const CategoryManagementScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>Categories</Text>
+    
             <Text style={styles.headerSubtitle}>
               {categories.length} categories • {totalProducts} products
             </Text>
