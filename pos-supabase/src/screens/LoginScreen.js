@@ -163,6 +163,37 @@ const LoginScreen = ({ onLogin }) => {
                 <Text style={styles.loginButtonText}>Login</Text>
               )}
             </TouchableOpacity>
+
+            {/* Demo Credentials Section */}
+            <View style={styles.demoContainer}>
+              <Text style={styles.demoTitle}>Quick Demo Login</Text>
+              
+              {/* Admin Demo Button */}
+              <TouchableOpacity 
+                style={[styles.demoButton, styles.adminButton]} 
+                onPress={demoAdmin}
+              >
+                <View style={styles.demoRow}>
+                  <Icon name="shield-checkmark" size={16} color="#b90d0b" />
+                  <Text style={styles.demoText}>Admin Login</Text>
+                </View>
+                <Text style={styles.demoCredentials}>admin@nitrogo.com</Text>
+                <Text style={styles.demoCredentials}>Nitro@Admin2026#Secure</Text>
+              </TouchableOpacity>
+
+              {/* Staff Demo Button */}
+              <TouchableOpacity 
+                style={[styles.demoButton, styles.staffButton]} 
+                onPress={demoStaff}
+              >
+                <View style={styles.demoRow}>
+                  <Icon name="person" size={16} color="#2c6b9e" />
+                  <Text style={styles.demoText}>Staff Login</Text>
+                </View>
+                <Text style={styles.demoCredentials}>staff@nitrogo.com</Text>
+                <Text style={styles.demoCredentials}>Nitro@Staff2026#Strong</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -335,7 +366,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
   },
-  demoPassword: {
+  demoCredentials: {
     fontSize: 12,
     color: '#666',
     marginLeft: 22,
