@@ -350,105 +350,113 @@ const SalesHistoryScreen = () => {
   const averageOrder = getAverageOrderValue();
   const topProduct = getTopProduct();
 
+  // Render the fixed header content
+  const renderFixedHeader = () => (
+    <View style={styles.fixedHeaderContainer}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Sales History</Text>
+          <Text style={styles.headerSubtitle}>
+            {filteredSales.length} transactions • {formatCurrency(totalRevenue)} revenue
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.headerAction} onPress={loadSales}>
+          <Icon name="refresh-outline" size={22} color="#B90D0B" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Stats Cards */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.statsScroll}
+        contentContainerStyle={styles.statsScrollContent}
+      >
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.revenueIcon]}>
+            <Icon name="cash-outline" size={20} color="#B90D0B" />
+          </View>
+          <Text style={styles.statValue}>{formatCurrency(totalRevenue)}</Text>
+          <Text style={styles.statLabel}>Revenue</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.profitIcon]}>
+            <Icon name="trending-up" size={20} color="#10B981" />
+          </View>
+          <Text style={[styles.statValue, styles.profitColor]}>{formatCurrency(totalProfit)}</Text>
+          <Text style={styles.statLabel}>Profit</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.salesIcon]}>
+            <Icon name="cart-outline" size={20} color="#3B82F6" />
+          </View>
+          <Text style={styles.statValue}>{totalTransactions}</Text>
+          <Text style={styles.statLabel}>Transactions</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.averageIcon]}>
+            <Icon name="stats-chart-outline" size={20} color="#8B5CF6" />
+          </View>
+          <Text style={styles.statValue}>{formatCurrency(averageOrder)}</Text>
+          <Text style={styles.statLabel}>Average Order</Text>
+        </View>
+      </ScrollView>
+
+      {/* Top Product Banner */}
+      {topProduct && (
+        <View style={styles.topProductBanner}>
+          <Icon name="star" size={16} color="#F59E0B" />
+          <Text style={styles.topProductText}>
+            Best Seller: <Text style={styles.topProductName}>{topProduct.name}</Text>
+            {' '}({topProduct.quantity} units)
+          </Text>
+        </View>
+      )}
+
+      {/* Filter Buttons */}
+      <View style={styles.filterContainer}>
+        {['today', 'week', 'month', 'all'].map((filterOption) => (
+          <TouchableOpacity
+            key={filterOption}
+            style={[
+              styles.filterButton,
+              filter === filterOption && styles.filterButtonActive
+            ]}
+            onPress={() => setFilter(filterOption)}
+          >
+            <Icon 
+              name={
+                filterOption === 'today' ? 'today-outline' :
+                filterOption === 'week' ? 'calendar-outline' :
+                filterOption === 'month' ? 'calendar-number-outline' :
+                'list-outline'
+              } 
+              size={14} 
+              color={filter === filterOption ? '#FFFFFF' : '#6B7280'} 
+            />
+            <Text style={[
+              styles.filterText,
+              filter === filterOption && styles.filterTextActive
+            ]}>
+              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
       
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Sales History</Text>
-            <Text style={styles.headerSubtitle}>
-              {filteredSales.length} transactions • {formatCurrency(totalRevenue)} revenue
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.headerAction} onPress={loadSales}>
-            <Icon name="refresh-outline" size={22} color="#B90D0B" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Stats Cards */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.statsScroll}
-          contentContainerStyle={styles.statsScrollContent}
-        >
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.revenueIcon]}>
-              <Icon name="cash-outline" size={20} color="#B90D0B" />
-            </View>
-            <Text style={styles.statValue}>{formatCurrency(totalRevenue)}</Text>
-            <Text style={styles.statLabel}>Revenue</Text>
-          </View>
-          
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.profitIcon]}>
-              <Icon name="trending-up" size={20} color="#10B981" />
-            </View>
-            <Text style={[styles.statValue, styles.profitColor]}>{formatCurrency(totalProfit)}</Text>
-            <Text style={styles.statLabel}>Profit</Text>
-          </View>
-          
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.salesIcon]}>
-              <Icon name="cart-outline" size={20} color="#3B82F6" />
-            </View>
-            <Text style={styles.statValue}>{totalTransactions}</Text>
-            <Text style={styles.statLabel}>Transactions</Text>
-          </View>
-          
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.averageIcon]}>
-              <Icon name="stats-chart-outline" size={20} color="#8B5CF6" />
-            </View>
-            <Text style={styles.statValue}>{formatCurrency(averageOrder)}</Text>
-            <Text style={styles.statLabel}>Average Order</Text>
-          </View>
-        </ScrollView>
-
-        {/* Top Product Banner */}
-        {topProduct && (
-          <View style={styles.topProductBanner}>
-            <Icon name="star" size={16} color="#F59E0B" />
-            <Text style={styles.topProductText}>
-              Best Seller: <Text style={styles.topProductName}>{topProduct.name}</Text>
-              {' '}({topProduct.quantity} units)
-            </Text>
-          </View>
-        )}
-
-        {/* Filter Buttons */}
-        <View style={styles.filterContainer}>
-          {['today', 'week', 'month', 'all'].map((filterOption) => (
-            <TouchableOpacity
-              key={filterOption}
-              style={[
-                styles.filterButton,
-                filter === filterOption && styles.filterButtonActive
-              ]}
-              onPress={() => setFilter(filterOption)}
-            >
-              <Icon 
-                name={
-                  filterOption === 'today' ? 'today-outline' :
-                  filterOption === 'week' ? 'calendar-outline' :
-                  filterOption === 'month' ? 'calendar-number-outline' :
-                  'list-outline'
-                } 
-                size={14} 
-                color={filter === filterOption ? '#FFFFFF' : '#6B7280'} 
-              />
-              <Text style={[
-                styles.filterText,
-                filter === filterOption && styles.filterTextActive
-              ]}>
-                {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Fixed Header Container */}
+        {renderFixedHeader()}
 
         {/* Sales List */}
         <FlatList
@@ -494,6 +502,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  fixedHeaderContainer: {
     backgroundColor: '#F3F4F6',
   },
   centerContainer: {
@@ -643,6 +654,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 20,
   },
   saleCard: {

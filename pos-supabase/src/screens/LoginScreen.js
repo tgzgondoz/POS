@@ -164,7 +164,36 @@ const LoginScreen = ({ onLogin }) => {
               )}
             </TouchableOpacity>
 
-        
+            {/* Demo Credentials Section - NOW VISIBLE */}
+            <View style={styles.demoContainer}>
+              <Text style={styles.demoTitle}>Demo Credentials</Text>
+              
+              {/* Admin Demo Button */}
+              <TouchableOpacity 
+                style={[styles.demoButton, styles.adminButton]} 
+                onPress={demoAdmin}
+              >
+                <View style={styles.demoRow}>
+                  <Icon name="shield-checkmark" size={16} color="#b90d0b" />
+                  <Text style={styles.demoText}>Admin Login</Text>
+                </View>
+                <Text style={styles.demoPassword}>admin@nitrogo.com</Text>
+                <Text style={styles.demoPassword}>Nitro@Admin2026#Secure</Text>
+              </TouchableOpacity>
+
+              {/* Staff Demo Button */}
+              <TouchableOpacity 
+                style={[styles.demoButton, styles.staffButton]} 
+                onPress={demoStaff}
+              >
+                <View style={styles.demoRow}>
+                  <Icon name="person" size={16} color="#2c6b9e" />
+                  <Text style={styles.demoText}>Staff Login</Text>
+                </View>
+                <Text style={styles.demoPassword}>staff@nitrogo.com</Text>
+                <Text style={styles.demoPassword}>Nitro@Staff2026#Strong</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -186,17 +215,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  // New wrapper for the circle with outer glow/border
   logoCircleWrapper: {
     marginBottom: 16,
-    // Optional: Add shadow for better visual
     shadowColor: '#b90d0b',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
   },
-  // The circular container
   logoCircle: {
     width: 140,
     height: 140,
@@ -206,7 +232,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
-    // Optional: Add inner shadow or gradient effect
     overflow: 'hidden',
   },
   logo: {
@@ -313,29 +338,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#020204',
     marginBottom: 12,
+    textAlign: 'center',
   },
   demoButton: {
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginBottom: 10,
-    backgroundColor: '#f8f8f8',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    borderWidth: 1,
+  },
+  adminButton: {
+    backgroundColor: '#fff5f5',
+    borderColor: '#b90d0b',
+  },
+  staffButton: {
+    backgroundColor: '#f0f7ff',
+    borderColor: '#2c6b9e',
   },
   demoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
     marginBottom: 4,
   },
   demoText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#0e0b05',
-    fontWeight: '500',
+    fontWeight: '600',
+    marginLeft: 6,
   },
   demoPassword: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#666',
     marginLeft: 22,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });
 

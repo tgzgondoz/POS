@@ -380,68 +380,59 @@ const ProductManagementScreen = () => {
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
-     
+  // Render the fixed header content
+  const renderFixedHeader = () => (
+    <View style={styles.fixedHeaderContainer}>
       {/* Stats Cards */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
-        <View style={styles.statsScrollContent}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="cube-outline" size={20} color="#B90D0B" />
-            </View>
-            <Text style={styles.statValue}>{stats.totalProducts}</Text>
-            <Text style={styles.statLabel}>Products</Text>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.statsScroll}
+        contentContainerStyle={styles.statsScrollContent}
+      >
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Icon name="cube-outline" size={20} color="#B90D0B" />
           </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="cash-outline" size={20} color="#B90D0B" />
-            </View>
-            <Text style={styles.statValue}>{formatCurrency(stats.totalInventoryValue)}</Text>
-            <Text style={styles.statLabel}>Inventory</Text>
+          <Text style={styles.statValue}>{stats.totalProducts}</Text>
+          <Text style={styles.statLabel}>Products</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Icon name="cash-outline" size={20} color="#B90D0B" />
           </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="card-outline" size={20} color="#B90D0B" />
-            </View>
-            <Text style={styles.statValue}>{formatCurrency(stats.totalPotentialRevenue)}</Text>
-            <Text style={styles.statLabel}>Revenue</Text>
+          <Text style={styles.statValue}>{formatCurrency(stats.totalInventoryValue)}</Text>
+          <Text style={styles.statLabel}>Inventory</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Icon name="card-outline" size={20} color="#B90D0B" />
           </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <Icon name="trending-up" size={20} color="#B90D0B" />
-            </View>
-            <Text style={styles.statValue}>{formatCurrency(stats.totalPotentialProfit)}</Text>
-            <Text style={styles.statLabel}>Profit</Text>
+          <Text style={styles.statValue}>{formatCurrency(stats.totalPotentialRevenue)}</Text>
+          <Text style={styles.statLabel}>Revenue</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Icon name="trending-up" size={20} color="#B90D0B" />
           </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.warningIcon]}>
-              <Icon name="alert-circle-outline" size={20} color="#F59E0B" />
-            </View>
-            <Text style={[styles.statValue, styles.warningText]}>{stats.lowStockCount}</Text>
-            <Text style={styles.statLabel}>Low Stock</Text>
+          <Text style={styles.statValue}>{formatCurrency(stats.totalPotentialProfit)}</Text>
+          <Text style={styles.statLabel}>Profit</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.warningIcon]}>
+            <Icon name="alert-circle-outline" size={20} color="#F59E0B" />
           </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, styles.dangerIcon]}>
-              <Icon name="close-circle-outline" size={20} color="#EF4444" />
-            </View>
-            <Text style={[styles.statValue, styles.dangerText]}>{stats.outOfStockCount}</Text>
-            <Text style={styles.statLabel}>Out Stock</Text>
+          <Text style={[styles.statValue, styles.warningText]}>{stats.lowStockCount}</Text>
+          <Text style={styles.statLabel}>Low Stock</Text>
+        </View>
+        <View style={styles.statCard}>
+          <View style={[styles.statIconContainer, styles.dangerIcon]}>
+            <Icon name="close-circle-outline" size={20} color="#EF4444" />
           </View>
+          <Text style={[styles.statValue, styles.dangerText]}>{stats.outOfStockCount}</Text>
+          <Text style={styles.statLabel}>Out Stock</Text>
         </View>
       </ScrollView>
-
-      {/* Add Product FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => {
-          resetForm();
-          setModalVisible(true);
-        }}
-      >
-        <Icon name="add" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
 
       {/* Search and Filters */}
       <View style={styles.searchContainer}>
@@ -527,13 +518,28 @@ const ProductManagementScreen = () => {
           </View>
         </View>
       )}
+    </View>
+  );
 
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
+      
+      {/* Fixed Header Container */}
+      {renderFixedHeader()}
+
+      {/* Scrollable Product List */}
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={loadProducts} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={loadProducts}
+            colors={['#B90D0B']}
+            tintColor="#B90D0B"
+          />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -545,7 +551,19 @@ const ProductManagementScreen = () => {
           </View>
         }
         contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
       />
+
+      {/* Add Product FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+          resetForm();
+          setModalVisible(true);
+        }}
+      >
+        <Icon name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
 
       {/* Add/Edit Product Modal */}
       <Modal
@@ -776,6 +794,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F3F4F6',
   },
+  fixedHeaderContainer: {
+    backgroundColor: '#F3F4F6',
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -964,11 +985,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   listContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 100,
   },
   productCard: {
     backgroundColor: '#FFFFFF',
-    margin: 16,
+    marginBottom: 12,
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000000',
