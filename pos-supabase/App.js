@@ -20,19 +20,19 @@ const initializeDefaultUsers = async () => {
     const users = await AuthService.getUsers();
     if (users.length === 0) {
       console.log('Creating default users for NitroGo...');
-      // Create default admin with strong password for 2026
-      await AuthService.registerUser('admin@nitrogo.com', 'Nitro@Admin2026#Secure', 'NitroGo Admin', 'admin');
+      // Create default admin with specified credentials
+      await AuthService.registerUser('blessednitrogo@gmail.com', 'Desselb9025', 'NitroGo Admin', 'admin');
       // Create default cashier with strong password for 2026
       await AuthService.registerUser('staff@nitrogo.com', 'Nitro@Staff2026#Strong', 'NitroGo Staff', 'cashier');
       console.log('Default NitroGo users created successfully for 2026');
     } else {
       // Check if default users exist, if not create them
-      const adminExists = users.some(user => user.email === 'admin@nitrogo.com');
+      const adminExists = users.some(user => user.email === 'blessednitrogo@gmail.com');
       const staffExists = users.some(user => user.email === 'staff@nitrogo.com');
       
       if (!adminExists) {
         console.log('Creating missing admin user...');
-        await AuthService.registerUser('admin@nitrogo.com', 'Nitro@Admin2026#Secure', 'NitroGo Admin', 'admin');
+        await AuthService.registerUser('blessednitrogo@gmail.com', 'Desselb9025', 'NitroGo Admin', 'admin');
       }
       
       if (!staffExists) {
